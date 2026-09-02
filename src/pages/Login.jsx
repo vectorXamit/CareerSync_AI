@@ -24,7 +24,7 @@ export default function Login() {
       if (active && data.session) navigate('/upload')
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) navigate('/upload')
+      if (active && session) navigate('/upload')
     })
     return () => {
       active = false

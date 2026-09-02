@@ -36,8 +36,6 @@ export default function Dashboard() {
     data = null
   }
 
-  console.log('Dashboard real Groq data:', data)
-
   const hasData = Boolean(data)
   if (!hasData) {
     return (
@@ -56,16 +54,18 @@ export default function Dashboard() {
     )
   }
 
-  const fullName = data.full_name
-  const email = data.email
-  const atsScore = data.ats_score
-  const skills = data.skills || []
-  const education = data.education || []
-  const experience = data.experience || []
-  const projects = data.projects || []
-  const strengths = data.strengths || []
-  const weaknesses = data.weaknesses || []
-  const suggestions = data.suggestions || []
+  const parsed = data.parsed_data || data
+
+  const fullName = parsed.full_name
+  const email = parsed.email
+  const atsScore = data.ats_score ?? parsed.ats_score ?? 0
+  const skills = parsed.skills || []
+  const education = parsed.education || []
+  const experience = parsed.experience || []
+  const projects = parsed.projects || []
+  const strengths = parsed.strengths || []
+  const weaknesses = parsed.weaknesses || []
+  const suggestions = parsed.suggestions || []
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">

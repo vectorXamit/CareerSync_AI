@@ -110,7 +110,12 @@ export default function Upload() {
 
     try {
       const { data } = await supabase.auth.getSession()
-      const token = data.session.access_token
+      const token = data.session?.access_token
+      if (!token) {
+        setError('Session expired — please log in again')
+        setParsing(false)
+        return
+      }
       const res = await axios.post(`${API_URL}/resume/upload`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -118,7 +123,6 @@ export default function Upload() {
       console.log('REAL DATA FROM BACKEND', res.data)
 
       localStorage.setItem('careerpilot_data', JSON.stringify(res.data))
-      localStorage.setItem('student_id', res.data.email || '123')
 
       setParsing(false)
       setScanComplete(true)
@@ -127,9 +131,8 @@ export default function Upload() {
     } catch (err) {
       console.error('Backend error:', err)
       setParsing(false)
-      setError('Backend error - check FastAPI terminal')
-      await new Promise((r) => setTimeout(r, 800))
-      navigate('/')
+      const msg = err.response?.data?.detail || 'Backend error — check FastAPI terminal'
+      setError(msg)
     }
   }
 
