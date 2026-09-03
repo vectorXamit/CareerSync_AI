@@ -73,7 +73,10 @@ export async function fetchInternships(skills, limit = 4) {
     const res = await api.get('/internships/recommend', {
       params: { skills: skills.join(','), limit },
     })
-    return res.data
+    const data = res.data
+    if (Array.isArray(data)) return data
+    if (data && Array.isArray(data.internships)) return data.internships
+    return Array.isArray(data?.data) ? data.data : null
   } catch (err) {
     console.warn('fetchInternships failed:', err.message)
     return null

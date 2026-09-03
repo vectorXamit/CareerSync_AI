@@ -13,14 +13,15 @@ import {
 
 const TARGET_ROLES = ['SDE', 'Data Science', 'AI/ML Engineer', 'Web Developer', 'Other']
 
-function SectionCard({ title, icon, children, delay = 0 }) {
+function SectionCard({ title, icon, children, delay = 0, id }) {
   return (
     <motion.div
+      id={id}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay }}
-      className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 hover:border-purple-500/30 transition-colors"
+      className="scroll-mt-28 bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 hover:border-purple-500/30 transition-colors"
     >
       <div className="flex items-center gap-2 mb-4">
         <span className="text-lg">{icon}</span>
@@ -53,6 +54,68 @@ function RoleSelector({ value, onChange }) {
         </button>
       ))}
     </div>
+  )
+}
+
+const NAV_SECTIONS = [
+  { id: 'ats', label: '⚡ ATS' },
+  { id: 'skills', label: '🧠 Skills' },
+  { id: 'skillgap', label: '🎯 Skill Gap' },
+  { id: 'internships', label: '💼 Internships' },
+  { id: 'roadmap', label: '🗺️ Roadmap' },
+]
+
+function StickyNav() {
+  const [active, setActive] = useState('')
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 200)
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActive(e.target.id)
+        })
+      },
+      { rootMargin: '-40% 0px -55% 0px' },
+    )
+    NAV_SECTIONS.forEach(({ id }) => {
+      const el = document.getElementById(id)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: scrolled ? 1 : 0, y: scrolled ? 0 : -20 }}
+      transition={{ duration: 0.3 }}
+      className="fixed top-16 left-1/2 -translate-x-1/2 z-40 px-3 py-2 rounded-full bg-zinc-900/85 backdrop-blur-xl border border-zinc-700 shadow-lg shadow-black/40 flex items-center gap-1 pointer-events-none"
+    >
+      <div className="flex items-center gap-1 pointer-events-auto">
+        {NAV_SECTIONS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() =>
+              document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              active === id
+                ? 'bg-purple-500/25 border-purple-500/60 text-purple-100'
+                : 'bg-transparent border-transparent text-zinc-400 hover:text-white hover:bg-zinc-800'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </motion.div>
   )
 }
 
@@ -220,8 +283,10 @@ function DashboardContent({
             <RoleSelector value={targetRole} onChange={setTargetRole} />
           </motion.header>
 
+          <StickyNav />
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-            <SectionCard title="ATS Score" icon="⚡" delay={0}>
+            <SectionCard id="ats" title="ATS Score" icon="⚡" delay={0}>
               {typeof atsScore === 'number' ? (
                 <div className="flex items-center gap-4">
                   <div
@@ -242,7 +307,7 @@ function DashboardContent({
               )}
             </SectionCard>
 
-            <SectionCard title="Skills" icon="🧠" delay={0.1}>
+            <SectionCard id="skills" title="Skills" icon="🧠" delay={0.1}>
               {skills.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {skills.map((skill, i) => (
@@ -382,12 +447,16 @@ function DashboardContent({
               )}
             </SectionCard>
 
-            <SkillGapCard data={skillGap} loading={loadingGap} />
+            <div id="skillgap" className="scroll-mt-28">
+              <SkillGapCard data={skillGap} loading={loadingGap} />
+            </div>
 
-            <InternshipCard data={internships} loading={loadingInternships} />
+            <div id="internships" className="scroll-mt-28">
+              <InternshipCard data={internships} loading={loadingInternships} />
+            </div>
           </div>
 
-          <div className="mt-6">
+          <div id="roadmap" className="scroll-mt-28 mt-6">
             <RoadmapCard data={roadmap} loading={loadingRoadmap} />
           </div>
 
