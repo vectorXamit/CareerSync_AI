@@ -15,10 +15,10 @@ const TARGET_ROLES = ['SDE', 'Data Science', 'AI/ML Engineer', 'Web Developer', 
 
 function SectionCard({ title, icon, children, delay = 0, id, accent = 'purple' }) {
   const accentMap = {
-    purple: 'hover:border-purple-500/30 hover:shadow-[0_0_50px_rgba(168,85,247,0.1)]',
-    cyan: 'hover:border-cyan-500/30 hover:shadow-[0_0_50px_rgba(34,211,238,0.1)]',
-    emerald: 'hover:border-emerald-500/30 hover:shadow-[0_0_50px_rgba(52,211,153,0.1)]',
-    amber: 'hover:border-amber-500/30 hover:shadow-[0_0_50px_rgba(251,191,36,0.1)]',
+    purple: 'hover:border-[rgba(124,58,237,0.3)] hover:shadow-[0_0_40px_rgba(124,58,237,0.15)]',
+    cyan: 'hover:border-[rgba(124,58,237,0.3)] hover:shadow-[0_0_40px_rgba(124,58,237,0.15)]',
+    emerald: 'hover:border-[rgba(124,58,237,0.3)] hover:shadow-[0_0_40px_rgba(124,58,237,0.15)]',
+    amber: 'hover:border-[rgba(124,58,237,0.3)] hover:shadow-[0_0_40px_rgba(124,58,237,0.15)]',
   }
   return (
     <motion.div
@@ -28,10 +28,10 @@ function SectionCard({ title, icon, children, delay = 0, id, accent = 'purple' }
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay }}
       whileHover={{ scale: 1.015, y: -4 }}
-      className={`scroll-mt-28 relative bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-[24px] p-6 shadow-2xl transition-all duration-500 cursor-default overflow-hidden group ${accentMap[accent]}`}
+      className={`scroll-mt-28 relative bg-[rgba(18,18,20,0.8)] backdrop-blur-xl border border-white/[0.08] rounded-[20px] p-6 shadow-2xl transition-all duration-500 cursor-default overflow-hidden group ${accentMap[accent]}`}
     >
       {/* Shimmer line on hover */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/0 to-transparent group-hover:via-purple-500/40 transition-all duration-700" />
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[rgba(124,58,237,0)] to-transparent group-hover:via-[rgba(124,58,237,0.4)] transition-all duration-700" />
       <div className="flex items-center gap-2.5 mb-5">
         <span className="text-base">{icon}</span>
         <h3 className="text-[14px] font-semibold tracking-wide text-zinc-200">{title}</h3>
@@ -284,37 +284,47 @@ function DashboardContent({
   }, [targetRole, skills])
 
   return (
-    <div className="min-h-screen bg-[#08080A] text-white relative overflow-hidden font-[Inter,sans-serif]">
-      {/* Grid pattern */}
+    <div className="min-h-screen bg-[#050507] text-white relative overflow-hidden font-[Inter,sans-serif]">
+      {/* 3 huge radial glows — fixed position */}
+      <div className="fixed top-[-200px] left-[-200px] w-[800px] h-[800px] rounded-full bg-[#7C3AED]/30 blur-[160px] pointer-events-none" />
+      <div className="fixed top-[-100px] right-[-100px] w-[600px] h-[600px] rounded-full bg-[#3B82F6]/20 blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-[-300px] left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-[#A855F7]/15 blur-[180px] pointer-events-none" />
+      {/* Grid pattern overlay */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-30"
+        className="fixed inset-0 pointer-events-none"
         style={{
+          opacity: 0.03,
           backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)',
+            'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
           backgroundSize: '48px 48px',
         }}
       />
-      {/* Header purple glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-600/20 blur-[140px] rounded-full pointer-events-none" />
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
+      {/* Noise texture overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          opacity: 0.02,
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)%25\'/%3E%3C/svg%3E")',
+          backgroundRepeat: 'repeat',
+          backgroundSize: '128px 128px',
+        }}
+      />
       {/* Floating dots */}
       <motion.div
         animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-40 right-[15%] w-2 h-2 rounded-full bg-purple-400/30 pointer-events-none"
+        className="fixed top-40 right-[15%] w-2 h-2 rounded-full bg-purple-400/30 pointer-events-none"
       />
       <motion.div
         animate={{ y: [0, 15, 0], x: [0, -8, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        className="absolute top-60 left-[10%] w-1.5 h-1.5 rounded-full bg-cyan-400/30 pointer-events-none"
+        className="fixed top-60 left-[10%] w-1.5 h-1.5 rounded-full bg-cyan-400/30 pointer-events-none"
       />
       <motion.div
         animate={{ y: [0, -12, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        className="absolute bottom-40 right-[25%] w-1 h-1 rounded-full bg-emerald-400/30 pointer-events-none"
+        className="fixed bottom-40 right-[25%] w-1 h-1 rounded-full bg-emerald-400/30 pointer-events-none"
       />
-      {/* Bottom glow */}
-      <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-cyan-500/8 blur-[120px] pointer-events-none" />
 
       <div className="relative z-10">
         <Navbar showLogout />
