@@ -13,17 +13,25 @@ import {
 
 const TARGET_ROLES = ['SDE', 'Data Science', 'AI/ML Engineer', 'Web Developer', 'Other']
 
-function SectionCard({ title, icon, children, delay = 0, id }) {
+function SectionCard({ title, icon, children, delay = 0, id, accent = 'purple' }) {
+  const accentMap = {
+    purple: 'hover:border-purple-500/30 hover:shadow-[0_0_50px_rgba(168,85,247,0.1)]',
+    cyan: 'hover:border-cyan-500/30 hover:shadow-[0_0_50px_rgba(34,211,238,0.1)]',
+    emerald: 'hover:border-emerald-500/30 hover:shadow-[0_0_50px_rgba(52,211,153,0.1)]',
+    amber: 'hover:border-amber-500/30 hover:shadow-[0_0_50px_rgba(251,191,36,0.1)]',
+  }
   return (
     <motion.div
       id={id}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay }}
-      className="scroll-mt-28 bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-[24px] p-6 shadow-2xl hover:border-purple-500/25 hover:shadow-[0_0_40px_rgba(168,85,247,0.08)] transition-all duration-300"
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ scale: 1.015, y: -4 }}
+      className={`scroll-mt-28 relative bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-[24px] p-6 shadow-2xl transition-all duration-500 cursor-default overflow-hidden group ${accentMap[accent]}`}
     >
+      {/* Shimmer line on hover */}
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/0 to-transparent group-hover:via-purple-500/40 transition-all duration-700" />
       <div className="flex items-center gap-2.5 mb-5">
         <span className="text-base">{icon}</span>
         <h3 className="text-[14px] font-semibold tracking-wide text-zinc-200">{title}</h3>
@@ -33,8 +41,22 @@ function SectionCard({ title, icon, children, delay = 0, id }) {
   )
 }
 
-function EmptyLine({ text }) {
-  return <p className="text-[13px] text-zinc-500">{text}</p>
+function StatBadge({ label, value, color = 'purple' }) {
+  const colors = {
+    purple: 'bg-purple-500/10 border-purple-500/20 text-purple-300',
+    cyan: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-300',
+    emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
+    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-300',
+  }
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05, y: -2 }}
+      className={`flex flex-col items-center px-4 py-3 rounded-2xl border ${colors[color]} cursor-default`}
+    >
+      <span className="text-xl font-bold">{value}</span>
+      <span className="text-[10px] uppercase tracking-wider opacity-60 mt-0.5">{label}</span>
+    </motion.div>
+  )
 }
 
 function RoleSelector({ value, onChange }) {
@@ -42,9 +64,11 @@ function RoleSelector({ value, onChange }) {
     <div className="flex items-center justify-center mt-6">
       <div className="inline-flex items-center bg-white/[0.04] border border-white/[0.08] rounded-full p-1 gap-1">
         {TARGET_ROLES.map((role) => (
-          <button
+          <motion.button
             key={role}
             onClick={() => onChange(role)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className={`px-4 py-2 rounded-full text-[12px] font-medium transition-all duration-300 ${
               value === role
                 ? 'bg-white text-black shadow-lg shadow-white/10'
@@ -52,7 +76,7 @@ function RoleSelector({ value, onChange }) {
             }`}
           >
             {role}
-          </button>
+          </motion.button>
         ))}
       </div>
     </div>
@@ -102,8 +126,10 @@ function StickyNav() {
     >
       <div className="flex items-center gap-1 pointer-events-auto">
         {NAV_SECTIONS.map(({ id, label }) => (
-          <button
+          <motion.button
             key={id}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={() =>
               document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }
@@ -114,7 +140,7 @@ function StickyNav() {
             }`}
           >
             {label}
-          </button>
+          </motion.button>
         ))}
       </div>
     </motion.div>
@@ -139,19 +165,25 @@ export default function Dashboard() {
       <div className="min-h-screen bg-[#08080A] text-white">
         <Navbar showLogout />
         <div className="flex flex-col items-center justify-center gap-4 pt-32">
-          <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-2">
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-2"
+          >
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-zinc-400">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeWidth="1.5" strokeLinejoin="round" />
               <path d="M14 2v6h6M9 13h6M9 17h6M9 9h1" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-          </div>
+          </motion.div>
           <p className="text-zinc-400 text-sm">No resume found</p>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/upload')}
             className="px-5 py-2.5 bg-white text-black rounded-full text-[13px] font-medium hover:bg-zinc-200 transition-colors"
           >
             Upload Resume
-          </button>
+          </motion.button>
         </div>
       </div>
     )
@@ -252,19 +284,35 @@ function DashboardContent({
   }, [targetRole, skills])
 
   return (
-    <div            className="min-h-screen bg-[#08080A] text-white relative overflow-hidden font-[Inter,sans-serif]">
+    <div className="min-h-screen bg-[#08080A] text-white relative overflow-hidden font-[Inter,sans-serif]">
       {/* Grid pattern */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-40"
+        className="absolute inset-0 pointer-events-none opacity-30"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)',
-          backgroundSize: '44px 44px',
+            'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
         }}
       />
       {/* Header purple glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-600/20 blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
+      {/* Floating dots */}
+      <motion.div
+        animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-40 right-[15%] w-2 h-2 rounded-full bg-purple-400/30 pointer-events-none"
+      />
+      <motion.div
+        animate={{ y: [0, 15, 0], x: [0, -8, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        className="absolute top-60 left-[10%] w-1.5 h-1.5 rounded-full bg-cyan-400/30 pointer-events-none"
+      />
+      <motion.div
+        animate={{ y: [0, -12, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+        className="absolute bottom-40 right-[25%] w-1 h-1 rounded-full bg-emerald-400/30 pointer-events-none"
+      />
       {/* Bottom glow */}
       <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-cyan-500/8 blur-[120px] pointer-events-none" />
 
@@ -277,13 +325,25 @@ function DashboardContent({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-4"
+            className="text-center mb-6"
           >
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+            <motion.h1
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-white/90 to-white/50 bg-clip-text text-transparent"
+            >
               {fullName ? `Welcome, ${fullName}` : 'Your Resume Dashboard'}
-            </h1>
+            </motion.h1>
             {email && (
-              <p className="text-zinc-400 mt-3 text-[14px]">{email}</p>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-zinc-400 mt-3 text-[14px]"
+              >
+                {email}
+              </motion.p>
             )}
             {parsedAt && (
               <p className="text-[11px] text-zinc-600 mt-2">
@@ -291,6 +351,19 @@ function DashboardContent({
               </p>
             )}
             <RoleSelector value={targetRole} onChange={setTargetRole} />
+
+            {/* Stats Row */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="flex items-center justify-center gap-3 mt-6 flex-wrap"
+            >
+              <StatBadge label="Skills" value={skills.length} color="purple" />
+              <StatBadge label="Projects" value={projects.length} color="cyan" />
+              <StatBadge label="Education" value={education.length} color="emerald" />
+              <StatBadge label="ATS" value={`${atsScore}%`} color={atsScore >= 70 ? 'emerald' : atsScore >= 40 ? 'amber' : 'purple'} />
+            </motion.div>
           </motion.header>
 
           <StickyNav />
@@ -298,19 +371,21 @@ function DashboardContent({
           {/* Main Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
             {/* Card 1: ATS Score */}
-            <SectionCard id="ats" title="ATS Score" icon="⚡" delay={0}>
+            <SectionCard id="ats" title="ATS Score" icon="⚡" delay={0} accent="emerald">
               {typeof atsScore === 'number' && atsScore > 0 ? (
                 <div>
                   <div className="flex items-center gap-5 mb-5">
                     <div className="relative w-24 h-24 shrink-0">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="10" />
-                        <circle
+                        <motion.circle
                           cx="50" cy="50" r="42" fill="none"
                           stroke={atsScore >= 70 ? '#34d399' : atsScore >= 40 ? '#fbbf24' : '#f87171'}
                           strokeWidth="10" strokeLinecap="round"
                           strokeDasharray={2 * Math.PI * 42}
-                          strokeDashoffset={2 * Math.PI * 42 * (1 - atsScore / 100)}
+                          initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                          animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - atsScore / 100) }}
+                          transition={{ duration: 1.2, ease: 'easeOut', delay: 0.5 }}
                           style={{ filter: `drop-shadow(0 0 12px ${atsScore >= 70 ? '#34d399' : atsScore >= 40 ? '#fbbf24' : '#f87171'}60)` }}
                         />
                       </svg>
@@ -326,56 +401,80 @@ function DashboardContent({
                     </div>
                   </div>
                   <div className="space-y-2.5">
-                    <div className="flex items-center gap-2.5 bg-white/[0.03] rounded-xl px-3 py-2.5 border border-white/[0.05]">
-                      <div className={`w-2 h-2 rounded-full ${atsScore >= 70 ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
-                      <p className="text-[12px] text-zinc-400 flex-1">Keyword optimization</p>
-                      <p className="text-[11px] text-zinc-500 font-medium">{atsScore >= 70 ? 'Strong' : 'Needs work'}</p>
-                    </div>
-                    <div className="flex items-center gap-2.5 bg-white/[0.03] rounded-xl px-3 py-2.5 border border-white/[0.05]">
-                      <div className={`w-2 h-2 rounded-full ${skills.length >= 5 ? 'bg-blue-400' : 'bg-amber-400'}`} />
-                      <p className="text-[12px] text-zinc-400 flex-1">Skills coverage</p>
-                      <p className="text-[11px] text-zinc-500 font-medium">{skills.length} skills</p>
-                    </div>
-                    <div className="flex items-center gap-2.5 bg-white/[0.03] rounded-xl px-3 py-2.5 border border-white/[0.05]">
-                      <div className={`w-2 h-2 rounded-full ${experience.length > 0 ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                      <p className="text-[12px] text-zinc-400 flex-1">Experience section</p>
-                      <p className="text-[11px] text-zinc-500 font-medium">{experience.length > 0 ? 'Present' : 'Missing'}</p>
-                    </div>
+                    {[
+                      { label: 'Keyword optimization', ok: atsScore >= 70, val: atsScore >= 70 ? 'Strong' : 'Needs work' },
+                      { label: 'Skills coverage', ok: skills.length >= 5, val: `${skills.length} skills`, color: 'blue' },
+                      { label: 'Experience section', ok: experience.length > 0, val: experience.length > 0 ? 'Present' : 'Missing', colorMissing: 'red' },
+                    ].map((item, i) => (
+                      <motion.div
+                        key={i}
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex items-center gap-2.5 bg-white/[0.03] rounded-xl px-3 py-2.5 border border-white/[0.05] hover:border-white/[0.12] transition-colors cursor-default"
+                      >
+                        <div className={`w-2 h-2 rounded-full ${item.ok ? 'bg-emerald-400' : item.colorMissing === 'red' ? 'bg-red-400' : item.color === 'blue' ? 'bg-blue-400' : 'bg-zinc-600'}`} />
+                        <p className="text-[12px] text-zinc-400 flex-1">{item.label}</p>
+                        <p className="text-[11px] text-zinc-500 font-medium">{item.val}</p>
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
               ) : (
-                <EmptyLine text="No ATS score extracted" />
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <p className="text-[13px] text-zinc-300 font-medium mb-1">No ATS score yet</p>
+                  <p className="text-[11px] text-zinc-600">Upload resume to get your score</p>
+                </div>
               )}
             </SectionCard>
 
             {/* Card 2: Skills */}
-            <SectionCard id="skills" title="Skills" icon="🧠" delay={0.1}>
+            <SectionCard id="skills" title="Skills" icon="🧠" delay={0.1} accent="purple">
               {skills.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {skills.map((skill, i) => (
                     <motion.span
                       key={i}
-                      initial={{ scale: 0 }}
-                      whileInView={{ scale: 1 }}
+                      initial={{ scale: 0, opacity: 0 }}
+                      whileInView={{ scale: 1, opacity: 1 }}
                       viewport={{ once: true }}
+                      whileHover={{ scale: 1.1, y: -2 }}
                       transition={{ type: 'spring', stiffness: 300, damping: 18, delay: i * 0.03 }}
-                      className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-[#1a1625] border border-purple-500/20 text-purple-200 hover:bg-purple-500/20 transition-colors cursor-default"
+                      className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-[#1a1625] border border-purple-500/20 text-purple-200 hover:bg-purple-500/25 hover:border-purple-500/40 hover:shadow-[0_0_12px_rgba(168,85,247,0.15)] transition-all duration-300 cursor-default"
                     >
                       {skill}
                     </motion.span>
                   ))}
                 </div>
               ) : (
-                <EmptyLine text="No skills extracted" />
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-purple-400">
+                      <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
+                      <path d="M8 12h8M12 8v8" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <p className="text-[13px] text-zinc-300 font-medium mb-1">No skills found</p>
+                  <p className="text-[11px] text-zinc-600">Upload a clearer resume</p>
+                </div>
               )}
             </SectionCard>
 
             {/* Card 3: Education */}
-            <SectionCard title="Education" icon="🎓" delay={0.2}>
+            <SectionCard title="Education" icon="🎓" delay={0.2} accent="purple">
               {education.length > 0 ? (
                 <div className="space-y-3">
                   {education.map((e, i) => (
-                    <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-purple-500/20 hover:bg-white/[0.06] transition-colors cursor-default">
+                    <motion.div
+                      key={i}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      transition={{ duration: 0.2 }}
+                      className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-purple-500/20 hover:bg-white/[0.06] transition-all cursor-default"
+                    >
                       <div className="flex items-start gap-3">
                         <div className="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-purple-400">
@@ -410,28 +509,25 @@ function DashboardContent({
                     </svg>
                   </div>
                   <p className="text-[13px] text-zinc-300 font-medium mb-1">No education found</p>
-                  <p className="text-[11px] text-zinc-600">Upload a clearer resume to extract education</p>
+                  <p className="text-[11px] text-zinc-600">Upload a clearer resume</p>
                 </div>
               )}
             </SectionCard>
 
             {/* Card 4: Experience */}
-            <SectionCard title="Experience" icon="💼" delay={0.3}>
+            <SectionCard title="Experience" icon="💼" delay={0.3} accent="cyan">
               {experience.length > 0 ? (
                 <div className="space-y-3">
                   {experience.map((ex, i) => (
-                    <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-cyan-500/20 hover:bg-white/[0.06] transition-colors cursor-default">
-                      <p className="text-[13px] text-white font-semibold">
-                        {ex.role || 'Role'}
-                      </p>
-                      <p className="text-[12px] text-zinc-400 mt-0.5">
-                        {ex.company || ''}
-                      </p>
-                      {ex.duration && (
-                        <p className="text-[11px] text-zinc-500 mt-1.5">
-                          {ex.duration}
-                        </p>
-                      )}
+                    <motion.div
+                      key={i}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      transition={{ duration: 0.2 }}
+                      className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-cyan-500/20 hover:bg-white/[0.06] transition-all cursor-default"
+                    >
+                      <p className="text-[13px] text-white font-semibold">{ex.role || 'Role'}</p>
+                      <p className="text-[12px] text-zinc-400 mt-0.5">{ex.company || ''}</p>
+                      {ex.duration && <p className="text-[11px] text-zinc-500 mt-1.5">{ex.duration}</p>}
                     </motion.div>
                   ))}
                 </div>
@@ -444,8 +540,8 @@ function DashboardContent({
                     </svg>
                   </div>
                   <p className="text-[13px] text-zinc-300 font-medium mb-1">No experience yet</p>
-                  <p className="text-[11px] text-zinc-600 mb-3">Add your first role to boost ATS score</p>
-                  <div className="flex items-center gap-4 text-center">
+                  <p className="text-[11px] text-zinc-600 mb-3">Add your first role to boost ATS</p>
+                  <div className="flex items-center gap-4">
                     <div className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                       <p className="text-[16px] font-bold text-zinc-200">0</p>
                       <p className="text-[9px] text-zinc-500 uppercase tracking-wider">Roles</p>
@@ -460,23 +556,28 @@ function DashboardContent({
             </SectionCard>
 
             {/* Card 5: Projects */}
-            <SectionCard title="Projects" icon="🚀" delay={0.4}>
+            <SectionCard title="Projects" icon="🚀" delay={0.4} accent="emerald">
               {projects.length > 0 ? (
                 <div className="space-y-3">
                   {projects.map((p, i) => (
-                    <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-emerald-500/20 hover:bg-white/[0.06] transition-colors group cursor-default">
+                    <motion.div
+                      key={i}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      transition={{ duration: 0.2 }}
+                      className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-emerald-500/20 hover:bg-white/[0.06] transition-all group cursor-default"
+                    >
                       <div className="flex items-center justify-between">
-                        <p className="text-[13px] text-white font-semibold">
-                          {p.name || 'Project'}
-                        </p>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-zinc-600 group-hover:text-emerald-400 transition-colors">
+                        <p className="text-[13px] text-white font-semibold">{p.name || 'Project'}</p>
+                        <motion.svg
+                          whileHover={{ x: 4 }}
+                          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          className="text-zinc-600 group-hover:text-emerald-400 transition-colors"
+                        >
                           <path d="M5 12h14M12 5l7 7-7 7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        </motion.svg>
                       </div>
                       {p.tech_stack && (
-                        <p className="text-[11px] text-zinc-500 mt-1.5">
-                          {p.tech_stack.join(' · ')}
-                        </p>
+                        <p className="text-[11px] text-zinc-500 mt-1.5">{p.tech_stack.join(' · ')}</p>
                       )}
                     </motion.div>
                   ))}
@@ -491,13 +592,13 @@ function DashboardContent({
                     </svg>
                   </div>
                   <p className="text-[13px] text-zinc-300 font-medium mb-1">No projects found</p>
-                  <p className="text-[11px] text-zinc-600">Projects help showcase your technical skills</p>
+                  <p className="text-[11px] text-zinc-600">Projects showcase your skills</p>
                 </div>
               )}
             </SectionCard>
 
             {/* Card 6: Strengths & Weaknesses */}
-            <SectionCard title="Strengths & Weaknesses" icon="📊" delay={0.5}>
+            <SectionCard title="Strengths & Weaknesses" icon="📊" delay={0.5} accent="amber">
               <div className="space-y-4">
                 {strengths.length > 0 && (
                   <div>
@@ -507,7 +608,12 @@ function DashboardContent({
                     </div>
                     <div className="space-y-1.5">
                       {strengths.map((s, i) => (
-                        <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="flex items-start gap-2 bg-emerald-500/[0.04] rounded-lg px-3 py-2 border border-emerald-500/10 cursor-default">
+                        <motion.div
+                          key={i}
+                          whileHover={{ scale: 1.02, x: 4 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex items-start gap-2 bg-emerald-500/[0.04] rounded-lg px-3 py-2 border border-emerald-500/10 hover:bg-emerald-500/[0.08] cursor-default"
+                        >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400 mt-0.5 shrink-0">
                             <path d="M20 6L9 17l-5-5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
@@ -525,7 +631,12 @@ function DashboardContent({
                     </div>
                     <div className="space-y-1.5">
                       {weaknesses.map((w, i) => (
-                        <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="flex items-start gap-2 bg-amber-500/[0.04] rounded-lg px-3 py-2 border border-amber-500/10 cursor-default">
+                        <motion.div
+                          key={i}
+                          whileHover={{ scale: 1.02, x: 4 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex items-start gap-2 bg-amber-500/[0.04] rounded-lg px-3 py-2 border border-amber-500/10 hover:bg-amber-500/[0.08] cursor-default"
+                        >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-amber-400 mt-0.5 shrink-0">
                             <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
                             <path d="M12 8v4M12 16h.01" strokeWidth="1.5" strokeLinecap="round" />
@@ -540,11 +651,16 @@ function DashboardContent({
             </SectionCard>
 
             {/* Suggestions */}
-            <SectionCard title="Suggestions" icon="💡" delay={0.6}>
+            <SectionCard title="Suggestions" icon="💡" delay={0.6} accent="purple">
               {suggestions.length > 0 ? (
                 <ul className="space-y-2">
                   {suggestions.map((sugg, i) => (
-                    <motion.li key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="flex items-start gap-2.5 bg-white/[0.03] rounded-xl px-3.5 py-3 border border-white/[0.05] hover:border-purple-500/20 hover:bg-white/[0.06] transition-colors group cursor-default">
+                    <motion.li
+                      key={i}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-start gap-2.5 bg-white/[0.03] rounded-xl px-3.5 py-3 border border-white/[0.05] hover:border-purple-500/20 hover:bg-white/[0.06] transition-all cursor-default"
+                    >
                       <span className="text-purple-400 mt-0.5 shrink-0">→</span>
                       <p className="text-[12px] text-zinc-300 leading-relaxed">{sugg}</p>
                     </motion.li>
@@ -559,7 +675,7 @@ function DashboardContent({
                     </svg>
                   </div>
                   <p className="text-[13px] text-zinc-300 font-medium mb-1">No suggestions yet</p>
-                  <p className="text-[11px] text-zinc-600">Upload resume to get AI-powered tips</p>
+                  <p className="text-[11px] text-zinc-600">Upload resume for AI tips</p>
                 </div>
               )}
             </SectionCard>
