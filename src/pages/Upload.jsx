@@ -101,4 +101,6 @@ export default function Upload() {
             {scanComplete ? (
               <motion.div key="complete" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="bg-[rgba(18,18,20,0.8)] backdrop-blur-xl border border-emerald-500/30 rounded-[24px] p-8 w-full max-w-[600px] flex items-center justify-center gap-4">
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }} className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400"></svg>
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400">
+  <path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+</svg>
