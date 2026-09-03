@@ -21,7 +21,8 @@ function SectionCard({ title, icon, children, delay = 0, id }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay }}
-      className="scroll-mt-28 bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-[20px] p-6 shadow-2xl hover:border-purple-500/20 hover:shadow-[0_0_30px_rgba(168,85,247,0.06)] transition-all duration-300"
+      className="scroll-mt-28 bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-[24px] p-6 shadow-2xl hover:border-purple-500/25 hover:shadow-[0_0_40px_rgba(168,85,247,0.08)] transition-all duration-300"
+      whileHover={{ scale: 1.01 }}
     >
       <div className="flex items-center gap-2.5 mb-5">
         <span className="text-base">{icon}</span>
@@ -251,7 +252,7 @@ function DashboardContent({
   }, [targetRole, skills])
 
   return (
-    <div className="min-h-screen bg-[#08080A] text-white relative overflow-hidden">
+    <div            className="min-h-screen bg-[#08080A] text-white relative overflow-hidden font-[Inter,sans-serif]">
       {/* Grid pattern */}
       <div
         className="absolute inset-0 pointer-events-none opacity-40"
@@ -261,8 +262,9 @@ function DashboardContent({
           backgroundSize: '44px 44px',
         }}
       />
-      {/* Top radial glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/15 blur-[120px] rounded-full pointer-events-none" />
+      {/* Header purple glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-600/20 blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
       {/* Bottom glow */}
       <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-cyan-500/8 blur-[120px] pointer-events-none" />
 
@@ -300,20 +302,20 @@ function DashboardContent({
               {typeof atsScore === 'number' ? (
                 <div>
                   <div className="flex items-center gap-5 mb-5">
-                    <div className="relative w-20 h-20 shrink-0">
+                    <div className="relative w-24 h-24 shrink-0">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="7" />
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="10" />
                         <circle
                           cx="50" cy="50" r="42" fill="none"
                           stroke={atsScore >= 70 ? '#34d399' : atsScore >= 40 ? '#fbbf24' : '#f87171'}
-                          strokeWidth="7" strokeLinecap="round"
+                          strokeWidth="10" strokeLinecap="round"
                           strokeDasharray={2 * Math.PI * 42}
                           strokeDashoffset={2 * Math.PI * 42 * (1 - atsScore / 100)}
-                          style={{ filter: `drop-shadow(0 0 8px ${atsScore >= 70 ? '#34d399' : atsScore >= 40 ? '#fbbf24' : '#f87171'}40)` }}
+                          style={{ filter: `drop-shadow(0 0 12px ${atsScore >= 70 ? '#34d399' : atsScore >= 40 ? '#fbbf24' : '#f87171'}60)` }}
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className={`text-xl font-bold ${atsScore >= 70 ? 'text-emerald-400' : atsScore >= 40 ? 'text-amber-400' : 'text-red-400'}`}>{atsScore}%</span>
+                        <span className={`text-2xl font-bold ${atsScore >= 70 ? 'text-emerald-400' : atsScore >= 40 ? 'text-amber-400' : 'text-red-400'}`}>{atsScore}%</span>
                       </div>
                     </div>
                     <div>
