@@ -299,7 +299,7 @@ function DashboardContent({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
             {/* Card 1: ATS Score */}
             <SectionCard id="ats" title="ATS Score" icon="⚡" delay={0}>
-              {typeof atsScore === 'number' ? (
+              {typeof atsScore === 'number' && atsScore > 0 ? (
                 <div>
                   <div className="flex items-center gap-5 mb-5">
                     <div className="relative w-24 h-24 shrink-0">
@@ -375,7 +375,7 @@ function DashboardContent({
               {education.length > 0 ? (
                 <div className="space-y-3">
                   {education.map((e, i) => (
-                    <div key={i} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-white/[0.12] transition-colors">
+                    <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-purple-500/20 hover:bg-white/[0.06] transition-colors cursor-default">
                       <div className="flex items-start gap-3">
                         <div className="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-purple-400">
@@ -398,11 +398,20 @@ function DashboardContent({
                           )}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               ) : (
-                <EmptyLine text="No education extracted" />
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-purple-400">
+                      <path d="M22 10v6M2 10l10-5 10 5-10 5z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M6 12v5c3 3 9 3 12 0v-5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <p className="text-[13px] text-zinc-300 font-medium mb-1">No education found</p>
+                  <p className="text-[11px] text-zinc-600">Upload a clearer resume to extract education</p>
+                </div>
               )}
             </SectionCard>
 
@@ -411,7 +420,7 @@ function DashboardContent({
               {experience.length > 0 ? (
                 <div className="space-y-3">
                   {experience.map((ex, i) => (
-                    <div key={i} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-white/[0.12] transition-colors">
+                    <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-cyan-500/20 hover:bg-white/[0.06] transition-colors cursor-default">
                       <p className="text-[13px] text-white font-semibold">
                         {ex.role || 'Role'}
                       </p>
@@ -423,19 +432,29 @@ function DashboardContent({
                           {ex.duration}
                         </p>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-6 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-3">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-zinc-500">
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-cyan-400">
                       <rect x="2" y="7" width="20" height="14" rx="2" strokeWidth="1.5" />
                       <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" strokeWidth="1.5" />
                     </svg>
                   </div>
-                  <p className="text-[13px] text-zinc-400 mb-1">No experience yet</p>
-                  <p className="text-[11px] text-zinc-600">Add your first role to boost ATS</p>
+                  <p className="text-[13px] text-zinc-300 font-medium mb-1">No experience yet</p>
+                  <p className="text-[11px] text-zinc-600 mb-3">Add your first role to boost ATS score</p>
+                  <div className="flex items-center gap-4 text-center">
+                    <div className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                      <p className="text-[16px] font-bold text-zinc-200">0</p>
+                      <p className="text-[9px] text-zinc-500 uppercase tracking-wider">Roles</p>
+                    </div>
+                    <div className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                      <p className="text-[16px] font-bold text-zinc-200">0</p>
+                      <p className="text-[9px] text-zinc-500 uppercase tracking-wider">Companies</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </SectionCard>
@@ -445,7 +464,7 @@ function DashboardContent({
               {projects.length > 0 ? (
                 <div className="space-y-3">
                   {projects.map((p, i) => (
-                    <div key={i} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-emerald-500/20 transition-colors group">
+                    <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="bg-white/[0.04] rounded-xl p-4 border border-white/[0.06] hover:border-emerald-500/20 hover:bg-white/[0.06] transition-colors group cursor-default">
                       <div className="flex items-center justify-between">
                         <p className="text-[13px] text-white font-semibold">
                           {p.name || 'Project'}
@@ -459,11 +478,21 @@ function DashboardContent({
                           {p.tech_stack.join(' · ')}
                         </p>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               ) : (
-                <EmptyLine text="No projects extracted" />
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 17l10 5 10-5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 12l10 5 10-5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <p className="text-[13px] text-zinc-300 font-medium mb-1">No projects found</p>
+                  <p className="text-[11px] text-zinc-600">Projects help showcase your technical skills</p>
+                </div>
               )}
             </SectionCard>
 
@@ -478,12 +507,12 @@ function DashboardContent({
                     </div>
                     <div className="space-y-1.5">
                       {strengths.map((s, i) => (
-                        <div key={i} className="flex items-start gap-2 bg-emerald-500/[0.04] rounded-lg px-3 py-2 border border-emerald-500/10">
+                        <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="flex items-start gap-2 bg-emerald-500/[0.04] rounded-lg px-3 py-2 border border-emerald-500/10 cursor-default">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400 mt-0.5 shrink-0">
                             <path d="M20 6L9 17l-5-5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           <p className="text-[12px] text-zinc-300 leading-relaxed">{s}</p>
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                   </div>
@@ -496,13 +525,13 @@ function DashboardContent({
                     </div>
                     <div className="space-y-1.5">
                       {weaknesses.map((w, i) => (
-                        <div key={i} className="flex items-start gap-2 bg-amber-500/[0.04] rounded-lg px-3 py-2 border border-amber-500/10">
+                        <motion.div key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="flex items-start gap-2 bg-amber-500/[0.04] rounded-lg px-3 py-2 border border-amber-500/10 cursor-default">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-amber-400 mt-0.5 shrink-0">
                             <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
                             <path d="M12 8v4M12 16h.01" strokeWidth="1.5" strokeLinecap="round" />
                           </svg>
                           <p className="text-[12px] text-zinc-300 leading-relaxed">{w}</p>
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                   </div>
@@ -515,14 +544,23 @@ function DashboardContent({
               {suggestions.length > 0 ? (
                 <ul className="space-y-2">
                   {suggestions.map((sugg, i) => (
-                    <li key={i} className="flex items-start gap-2.5 bg-white/[0.03] rounded-xl px-3.5 py-3 border border-white/[0.05] hover:border-purple-500/20 transition-colors group">
+                    <motion.li key={i} whileHover={{ scale: 1.02, x: 4 }} transition={{ duration: 0.2 }} className="flex items-start gap-2.5 bg-white/[0.03] rounded-xl px-3.5 py-3 border border-white/[0.05] hover:border-purple-500/20 hover:bg-white/[0.06] transition-colors group cursor-default">
                       <span className="text-purple-400 mt-0.5 shrink-0">→</span>
                       <p className="text-[12px] text-zinc-300 leading-relaxed">{sugg}</p>
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
               ) : (
-                <EmptyLine text="No suggestions extracted" />
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-amber-400">
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeWidth="1.5" strokeLinecap="round" />
+                      <circle cx="12" cy="12" r="4" strokeWidth="1.5" />
+                    </svg>
+                  </div>
+                  <p className="text-[13px] text-zinc-300 font-medium mb-1">No suggestions yet</p>
+                  <p className="text-[11px] text-zinc-600">Upload resume to get AI-powered tips</p>
+                </div>
               )}
             </SectionCard>
 
