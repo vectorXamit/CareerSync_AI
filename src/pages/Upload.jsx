@@ -7,80 +7,52 @@ import Navbar from '../components/Navbar'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
-function Stepper() {
+function Sidebar() {
   const steps = [
-    { label: 'Login', state: 'done' },
-    { label: 'Upload Resume', state: 'active' },
-    { label: 'Dashboard', state: 'pending' },
+    { label: 'Login', sub: 'Authenticated', state: 'done' },
+    { label: 'Upload Resume', sub: 'Current step', state: 'active' },
+    { label: 'Dashboard', sub: 'Next', state: 'pending' },
   ]
   return (
-    <div className="flex items-center gap-0">
-      {steps.map((s, i) => (
-        <div key={i} className="flex items-center">
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border ${
-                s.state === 'done'
-                  ? 'bg-green-500 border-green-500 text-white'
-                  : s.state === 'active'
-                    ? 'bg-purple-600 border-purple-600 text-white'
-                    : 'bg-zinc-700 border-zinc-700 text-white'
-              }`}
-            >
-              {s.state === 'done' ? '✓' : i + 1}
-            </div>
-            <span
-              className={`text-sm hidden sm:block ${
-                s.state === 'active' ? 'text-white font-medium' : 'text-zinc-400'
-              }`}
-            >
-              {s.label}
-            </span>
+    <aside className="fixed top-0 left-0 w-[280px] h-screen bg-[#0A0A0B]/80 backdrop-blur-xl border-r border-white/[0.06] z-50 flex flex-col justify-between p-6 max-md:hidden">
+      <div>
+        <div className="flex items-center gap-2.5 mb-10">
+          <div className="w-8 h-8 rounded-lg bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#A78BFA]"><path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9L12 2z" fill="currentColor" /></svg>
           </div>
-          {i < steps.length - 1 && (
-            <div
-              className={`w-8 sm:w-12 h-0.5 mx-2 ${s.state === 'done' ? 'bg-green-500' : 'bg-zinc-600'}`}
-            />
-          )}
+          <span className="text-white font-bold text-[15px] tracking-tight">CareerSync AI</span>
         </div>
-      ))}
-    </div>
-  )
-}
-
-function FileIcon({ scanning }) {
-  return (
-    <div className="relative shrink-0 w-24 h-28">
-      <div className="absolute inset-0 rounded-2xl border border-purple-400/40 bg-purple-500/10 flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.3)]">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-purple-300">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M14 2v6h6M9 13h6M9 17h6M9 9h1" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
+        <div className="space-y-0">
+          {steps.map((step, i) => (
+            <div key={i} className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <motion.div whileHover={{ scale: 1.1 }} className={`relative w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${step.state === 'done' ? 'bg-emerald-500/20 border-2 border-emerald-500' : step.state === 'active' ? 'bg-[#7C3AED]/20 border-2 border-[#7C3AED]' : 'bg-white/[0.04] border-2 border-zinc-700'}`}>
+                  {step.state === 'done' ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg> : <span className={`text-[13px] font-bold ${step.state === 'active' ? 'text-[#A78BFA]' : 'text-zinc-500'}`}>{i + 1}</span>}
+                  {step.state === 'active' && <motion.div animate={{ scale: [1, 1.5, 1], opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#7C3AED]" />}
+                </motion.div>
+                {i < steps.length - 1 && <div className={`w-[2px] h-8 ${step.state === 'done' ? 'bg-emerald-500' : 'bg-zinc-700'}`} />}
+              </div>
+              <motion.div whileHover={{ x: 4 }} className="pt-1.5 pb-4">
+                <p className={`text-[13px] font-semibold ${step.state === 'active' ? 'text-white' : step.state === 'done' ? 'text-emerald-300' : 'text-zinc-500'}`}>{step.label}</p>
+                <p className={`text-[11px] mt-0.5 ${step.state === 'active' ? 'text-zinc-400' : 'text-zinc-600'}`}>{step.sub}</p>
+              </motion.div>
+            </div>
+          ))}
+        </div>
       </div>
-      {scanning && (
-        <motion.div
-          className="absolute left-2 right-2 h-[2px] bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full"
-          animate={{ y: [0, 88, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      )}
-    </div>
-  )
-}
-
-function UploadIcon() {
-  return (
-    <motion.div
-      animate={{ y: [0, -10, 0] }}
-      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-      className="w-20 h-20 rounded-2xl border border-purple-400/40 bg-gradient-to-br from-purple-600/20 to-cyan-500/10 flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.4)]"
-    >
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-purple-300">
-        <path d="M12 16V4M12 4L7 9M12 4l5 5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeWidth="2" strokeLinecap="round" />
-        <path d="M8 12h8" strokeWidth="1.5" strokeLinecap="round" className="text-cyan-300" />
-      </svg>
-    </motion.div>
+      <div>
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Progress</span>
+            <span className="text-[11px] text-zinc-400 font-medium">66%</span>
+          </div>
+          <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+            <motion.div initial={{ width: 0 }} animate={{ width: '66%' }} transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }} className="h-full bg-gradient-to-r from-[#7C3AED] to-[#A78BFA] rounded-full" />
+          </div>
+        </div>
+        <p className="text-[10px] text-zinc-600">2026 CareerSync AI</p>
+      </div>
+    </aside>
   )
 }
 
@@ -94,175 +66,39 @@ export default function Upload() {
 
   async function handleFile(file) {
     if (!file) return
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setError('Only PDF files are allowed.')
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File must be under 5MB.')
-      return
-    }
-    setError('')
-    setParsing(true)
-
-    const formData = new FormData()
-    formData.append('file', file)
-
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) { setError('Only PDF files are allowed.'); return }
+    if (file.size > 5 * 1024 * 1024) { setError('File must be under 5MB.'); return }
+    setError(''); setParsing(true)
+    const formData = new FormData(); formData.append('file', file)
     try {
-      const { data } = await supabase.auth.getSession()
-      const token = data.session?.access_token
-      if (!token) {
-        setError('Session expired — please log in again')
-        setParsing(false)
-        return
-      }
-      const res = await axios.post(`${API_URL}/resume/upload`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      console.log('REAL DATA FROM BACKEND', res.data)
-
-      localStorage.setItem('careerpilot_data', JSON.stringify(res.data))
-
-      setParsing(false)
-      setScanComplete(true)
-      await new Promise((r) => setTimeout(r, 1000))
-      navigate('/')
-    } catch (err) {
-      console.error('Backend error:', err)
-      setParsing(false)
-      const msg = err.response?.data?.detail || 'Backend error — check FastAPI terminal'
-      setError(msg)
-    }
+      const { data } = await supabase.auth.getSession(); const token = data.session?.access_token
+      if (!token) { setError('Session expired'); setParsing(false); return }
+      const res = await axios.post(`${API_URL}/resume/upload`, formData, { headers: { Authorization: `Bearer ${token}` } })
+      console.log('REAL DATA FROM BACKEND', res.data); localStorage.setItem('careerpilot_data', JSON.stringify(res.data))
+      setParsing(false); setScanComplete(true); await new Promise((r) => setTimeout(r, 1000)); navigate('/')
+    } catch (err) { console.error('Backend error:', err); setParsing(false); setError(err.response?.data?.detail || 'Backend error') }
   }
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-      <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-purple-600/25 blur-[500px] pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-cyan-500/20 blur-[500px] pointer-events-none" />
-
-      <div className="relative z-10">
-        <div className="flex items-start justify-between px-6 py-4">
-          <Navbar />
-          <Stepper />
-        </div>
-
-        <div className="text-center pt-10 px-4">
-          <h1 className="text-4xl font-bold">Upload Resume</h1>
-          <p className="text-zinc-400 mt-2 max-w-xl mx-auto">
-            Upload your resume to continue. We'll extract your experience, skills, and education using AI.
-          </p>
-        </div>
-
-        <div className="max-w-3xl mx-auto px-4 pt-10 pb-16">
+    <div className="min-h-screen bg-[#050507] text-white relative overflow-hidden font-[Inter,sans-serif]">
+      <div className="fixed inset-0 -z-10 overflow-hidden bg-[#050507]">
+        <div className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] rounded-full bg-[#7C3AED] blur-[120px] opacity-25 animate-[float1_20s_ease-in-out_infinite_alternate]" />
+        <div className="absolute top-[20%] -right-[5%] w-[600px] h-[600px] rounded-full bg-[#3B82F6] blur-[100px] opacity-20 animate-[float2_25s_ease-in-out_infinite_alternate]" />
+        <div className="absolute -bottom-[10%] left-[30%] w-[900px] h-[900px] rounded-full bg-[#A855F7] blur-[140px] opacity-15 animate-[float3_30s_ease-in-out_infinite_alternate]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] animate-[gridMove_20s_linear_infinite]" />
+        <div className="absolute inset-0" style={{ opacity: 0.03, backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)%25\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px 128px' }} />
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, #050507 100%)' }} />
+      </div>
+      <Sidebar />
+      <div className="relative z-10 ml-[280px] max-md:ml-0 min-h-screen flex flex-col">
+        <div className="md:hidden"><Navbar /></div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-[#A78BFA] bg-clip-text text-transparent">Upload Resume</h1>
+            <p className="text-zinc-500 mt-3 text-[14px]">Drop your PDF and let AI extract your experience, skills and education</p>
+          </motion.div>
           <AnimatePresence mode="wait">
             {scanComplete ? (
-              <motion.div
-                key="scancomplete"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="bg-zinc-900/60 backdrop-blur-xl border border-green-500/40 rounded-2xl p-6 max-w-3xl w-full mx-auto mt-8 flex items-center justify-center gap-3"
-              >
-                <span className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-green-400">
-                    <path d="M20 6 9 17l-5-5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <p className="text-green-300 font-medium">Scan complete</p>
-              </motion.div>
-            ) : !parsing ? (
-              <motion.div
-                key="dropzone"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20, scale: 0.98 }}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  setDragOver(false)
-                  handleFile(e.dataTransfer.files?.[0])
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setDragOver(true)
-                }}
-                onDragLeave={() => setDragOver(false)}
-                className={`border border-dashed rounded-[20px] h-[360px] bg-zinc-900/40 backdrop-blur-xl p-8 flex flex-col items-center justify-center gap-5 transition-all duration-200 ${
-                  dragOver
-                    ? 'border-solid border-purple-500 bg-zinc-900/80 scale-[1.02] shadow-[0_0_60px_rgba(168,85,247,0.3)]'
-                    : 'border-purple-400/50'
-                }`}
-              >
-                <UploadIcon />
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-white">
-                    {dragOver ? 'Release to upload 🚀' : 'Drop your resume here'}
-                  </p>
-                  <p className="text-zinc-400 mt-2">PDF only • Max 5MB</p>
-                </div>
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  className="bg-white text-black rounded-full px-6 py-2.5 font-medium hover:scale-105 transition-transform mt-2"
-                >
-                  Browse File
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  className="hidden"
-                  onChange={(e) => handleFile(e.target.files?.[0])}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="parsing"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-700 rounded-2xl p-6 max-w-3xl w-full mx-auto mt-8 flex items-center gap-6"
-              >
-                <FileIcon scanning />
-                <div className="flex-1">
-                  <p className="text-purple-200 font-medium text-lg">Parsing with AI... Extracting data...</p>
-                  <div className="bg-zinc-800 rounded-full h-3 w-full overflow-hidden mt-4">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-purple-600 to-cyan-400"
-                      initial={{ width: '0%' }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: 3, ease: 'easeInOut' }}
-                    />
-                  </div>
-                  <p className="text-zinc-400 text-sm mt-3">
-                    Extracting experience, skills, education • ~3 seconds remaining
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 text-white px-5 py-3 rounded-xl text-sm font-medium"
-          >
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
+              <motion.div key="complete" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="bg-[rgba(18,18,20,0.8)] backdrop-blur-xl border border-emerald-500/30 rounded-[24px] p-8 w-full max-w-[600px] flex items-center justify-center gap-4">
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }} className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-4
