@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
@@ -242,6 +242,18 @@ function DashboardContent({
   const [loadingGap, setLoadingGap] = useState(false)
   const [loadingInternships, setLoadingInternships] = useState(false)
   const [loadingRoadmap, setLoadingRoadmap] = useState(false)
+  const mouseRef = useRef(null)
+
+  useEffect(() => {
+    const el = mouseRef.current
+    if (!el) return
+    const handler = (e) => {
+      el.style.setProperty('--mouse-x', e.clientX + 'px')
+      el.style.setProperty('--mouse-y', e.clientY + 'px')
+    }
+    window.addEventListener('mousemove', handler)
+    return () => window.removeEventListener('mousemove', handler)
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('careersync_target_role', targetRole)
@@ -285,46 +297,23 @@ function DashboardContent({
 
   return (
     <div className="min-h-screen bg-[#050507] text-white relative overflow-hidden font-[Inter,sans-serif]">
-      {/* 3 huge radial glows — fixed position */}
-      <div className="fixed top-[-200px] left-[-200px] w-[800px] h-[800px] rounded-full bg-[#7C3AED]/30 blur-[160px] pointer-events-none" />
-      <div className="fixed top-[-100px] right-[-100px] w-[600px] h-[600px] rounded-full bg-[#3B82F6]/20 blur-[140px] pointer-events-none" />
-      <div className="fixed bottom-[-300px] left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-[#A855F7]/15 blur-[180px] pointer-events-none" />
-      {/* Grid pattern overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          opacity: 0.03,
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-        }}
-      />
-      {/* Noise texture overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          opacity: 0.02,
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)%25\'/%3E%3C/svg%3E")',
-          backgroundRepeat: 'repeat',
-          backgroundSize: '128px 128px',
-        }}
-      />
-      {/* Floating dots */}
-      <motion.div
-        animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        className="fixed top-40 right-[15%] w-2 h-2 rounded-full bg-purple-400/30 pointer-events-none"
-      />
-      <motion.div
-        animate={{ y: [0, 15, 0], x: [0, -8, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        className="fixed top-60 left-[10%] w-1.5 h-1.5 rounded-full bg-cyan-400/30 pointer-events-none"
-      />
-      <motion.div
-        animate={{ y: [0, -12, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        className="fixed bottom-40 right-[25%] w-1 h-1 rounded-full bg-emerald-400/30 pointer-events-none"
-      />
+      {/* ═══════════ ANIMATED AURORA BACKGROUND ═══════════ */}
+      <div className="fixed inset-0 -z-10 overflow-hidden bg-[#050507]">
+        {/* Orb 1 — Purple, top-left */}
+        <div className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] rounded-full bg-[#7C3AED] blur-[120px] opacity-25 animate-[float1_20s_ease-in-out_infinite_alternate]" />
+        {/* Orb 2 — Blue, top-right */}
+        <div className="absolute top-[20%] -right-[5%] w-[600px] h-[600px] rounded-full bg-[#3B82F6] blur-[100px] opacity-20 animate-[float2_25s_ease-in-out_infinite_alternate]" />
+        {/* Orb 3 — Violet, bottom-center */}
+        <div className="absolute -bottom-[10%] left-[30%] w-[900px] h-[900px] rounded-full bg-[#A855F7] blur-[140px] opacity-15 animate-[float3_30s_ease-in-out_infinite_alternate]" />
+        {/* Moving grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] animate-[gridMove_20s_linear_infinite]" />
+        {/* Noise texture */}
+        <div className="absolute inset-0" style={{ opacity: 0.03, backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)%25\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px 128px' }} />
+        {/* Vignette */}
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, #050507 100%)' }} />
+        {/* Mouse spotlight */}
+        <div ref={mouseRef} className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ background: 'radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(124,58,237,0.12), transparent 80%)' }} />
+      </div>
 
       <div className="relative z-10">
         <Navbar showLogout />
