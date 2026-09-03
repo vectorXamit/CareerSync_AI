@@ -101,6 +101,78 @@ export default function Upload() {
             {scanComplete ? (
               <motion.div key="complete" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="bg-[rgba(18,18,20,0.8)] backdrop-blur-xl border border-emerald-500/30 rounded-[24px] p-8 w-full max-w-[600px] flex items-center justify-center gap-4">
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }} className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400">
-  <path d="M5 13l4 4L19 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-</svg>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-emerald-400">
+                    <path d="M20 6L9 17l-5-5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </motion.div>
+                <div>
+                  <p className="text-emerald-300 font-semibold text-lg">Resume Uploaded!</p>
+                  <p className="text-zinc-500 text-sm mt-1">Redirecting to dashboard...</p>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="upload" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="w-full max-w-[600px]">
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]) }}
+                  onClick={() => fileRef.current?.click()}
+                  className={`relative cursor-pointer border-2 border-dashed rounded-[24px] p-12 text-center transition-all duration-300 ${
+                    dragOver
+                      ? 'border-purple-500 bg-purple-500/10 scale-[1.02]'
+                      : 'border-zinc-700 bg-[rgba(18,18,20,0.8)] hover:border-zinc-500 hover:bg-[rgba(18,18,20,0.9)]'
+                  }`}
+                >
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={(e) => handleFile(e.target.files[0])}
+                  />
+                  {parsing ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                        className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full"
+                      />
+                      <div>
+                        <p className="text-white font-semibold">Scanning Resume...</p>
+                        <p className="text-zinc-500 text-sm mt-1">AI is extracting your data</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-[#7C3AED]/10 border border-[#7C3AED]/20 flex items-center justify-center">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-[#A78BFA]">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <polyline points="17 8 12 3 7 8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <line x1="12" y1="3" x2="12" y2="15" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-white font-semibold">Drop your resume here</p>
+                        <p className="text-zinc-500 text-sm mt-1">or click to browse • PDF only • Max 5MB</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  )
+}
