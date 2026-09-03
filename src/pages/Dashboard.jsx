@@ -286,19 +286,47 @@ function DashboardContent({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
             <SectionCard id="ats" title="ATS Score" icon="⚡" delay={0}>
               {typeof atsScore === 'number' ? (
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`text-4xl font-bold ${atsScore >= 70 ? 'text-emerald-400' : atsScore >= 40 ? 'text-amber-400' : 'text-red-400'}`}
-                  >
-                    {atsScore}%
+                <div>
+                  <div className="flex items-center gap-5 mb-4">
+                    <div className="relative w-20 h-20 shrink-0">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+                        <circle
+                          cx="50" cy="50" r="42" fill="none"
+                          stroke={atsScore >= 70 ? '#34d399' : atsScore >= 40 ? '#fbbf24' : '#f87171'}
+                          strokeWidth="8" strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 42}
+                          strokeDashoffset={2 * Math.PI * 42 * (1 - atsScore / 100)}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className={`text-xl font-bold ${atsScore >= 70 ? 'text-emerald-400' : atsScore >= 40 ? 'text-amber-400' : 'text-red-400'}`}>{atsScore}%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {atsScore >= 70 ? 'Great match' : atsScore >= 40 ? 'Room to improve' : 'Needs work'}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-1">Resume optimization score</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-zinc-400">
-                    {atsScore >= 70
-                      ? 'Great match'
-                      : atsScore >= 40
-                        ? 'Room to improve'
-                        : 'Needs work'}
-                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${atsScore >= 70 ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+                      <p className="text-xs text-zinc-400">Keyword optimization</p>
+                      <p className="text-xs text-zinc-500 ml-auto">{atsScore >= 70 ? 'Strong' : 'Needs work'}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${skills.length >= 5 ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                      <p className="text-xs text-zinc-400">Skills coverage</p>
+                      <p className="text-xs text-zinc-500 ml-auto">{skills.length} skills</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${experience.length > 0 ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+                      <p className="text-xs text-zinc-400">Experience section</p>
+                      <p className="text-xs text-zinc-500 ml-auto">{experience.length > 0 ? 'Present' : 'Missing'}</p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <EmptyLine text="No ATS score extracted" />
@@ -333,16 +361,34 @@ function DashboardContent({
 
             <SectionCard title="Education" icon="🎓" delay={0.2}>
               {education.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {education.map((e, i) => (
-                    <div key={i} className="border-l-2 border-purple-500/40 pl-3">
-                      <p className="text-sm text-white font-medium">
-                        {e.degree || 'Degree'}
-                      </p>
-                      <p className="text-xs text-zinc-400">
-                        {e.institution || ''}
-                      </p>
-                      <p className="text-xs text-zinc-500">{e.year || ''}</p>
+                    <div key={i} className="bg-zinc-800/40 rounded-xl p-4 border border-zinc-700/50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center shrink-0">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-purple-400">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M6 12v5c3 3 9 3 12 0v-5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm text-white font-semibold">
+                            {e.degree || 'Degree'}
+                          </p>
+                          <p className="text-xs text-zinc-300 mt-0.5">
+                            {e.institution || ''}
+                          </p>
+                          {e.year && (
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-zinc-500">
+                                <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
+                                <path d="M12 6v6l4 2" strokeWidth="1.5" strokeLinecap="round" />
+                              </svg>
+                              <p className="text-[11px] text-zinc-500">{e.year}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
