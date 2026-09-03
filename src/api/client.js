@@ -55,4 +55,42 @@ export async function getMe() {
   }
 }
 
+export async function analyzeSkillGap(skills, targetRole) {
+  try {
+    const res = await api.post('/skill-gap/analyze', {
+      skills,
+      target_role: targetRole,
+    })
+    return res.data
+  } catch (err) {
+    console.warn('analyzeSkillGap failed:', err.message)
+    return null
+  }
+}
+
+export async function fetchInternships(skills, limit = 4) {
+  try {
+    const res = await api.get('/internships/recommend', {
+      params: { skills: skills.join(','), limit },
+    })
+    return res.data
+  } catch (err) {
+    console.warn('fetchInternships failed:', err.message)
+    return null
+  }
+}
+
+export async function generateRoadmap(missingSkills, targetRole) {
+  try {
+    const res = await api.post('/roadmap/generate', {
+      missing_skills: missingSkills,
+      target_role: targetRole,
+    })
+    return res.data
+  } catch (err) {
+    console.warn('generateRoadmap failed:', err.message)
+    return null
+  }
+}
+
 export default api

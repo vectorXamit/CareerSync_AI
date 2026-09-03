@@ -1,6 +1,17 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from '../components/Navbar'
+import SkillGapCard from '../components/SkillGapCard'
+import InternshipCard from '../components/InternshipCard'
+import RoadmapCard from '../components/RoadmapCard'
+import {
+  analyzeSkillGap,
+  fetchInternships,
+  generateRoadmap,
+} from '../api/client'
+
+const TARGET_ROLES = ['SDE', 'Data Science', 'AI/ML Engineer', 'Web Developer', 'Other']
 
 function SectionCard({ title, icon, children, delay = 0 }) {
   return (
@@ -22,6 +33,27 @@ function SectionCard({ title, icon, children, delay = 0 }) {
 
 function EmptyLine({ text }) {
   return <p className="text-sm text-zinc-500">{text}</p>
+}
+
+function RoleSelector({ value, onChange }) {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+      <span className="text-xs text-zinc-500 mr-1">Target Role:</span>
+      {TARGET_ROLES.map((role) => (
+        <button
+          key={role}
+          onClick={() => onChange(role)}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+            value === role
+              ? 'bg-purple-500/20 border-purple-500/60 text-purple-200'
+              : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+          }`}
+        >
+          {role}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 export default function Dashboard() {
@@ -66,6 +98,91 @@ export default function Dashboard() {
   const strengths = parsed.strengths || []
   const weaknesses = parsed.weaknesses || []
   const suggestions = parsed.suggestions || []
+  const parsedAt = parsed.parsed_at || null
+  const rawText = parsed.raw_text || ''
+
+  return (
+    <DashboardContent
+      fullName={fullName}
+      email={email}
+      atsScore={atsScore}
+      skills={skills}
+      education={education}
+      experience={experience}
+      projects={projects}
+      strengths={strengths}
+      weaknesses={weaknesses}
+      suggestions={suggestions}
+      parsedAt={parsedAt}
+      rawText={rawText}
+    />
+  )
+}
+
+function DashboardContent({
+  fullName,
+  email,
+  atsScore,
+  skills,
+  education,
+  experience,
+  projects,
+  strengths,
+  weaknesses,
+  suggestions,
+  parsedAt,
+  rawText,
+}) {
+  const [targetRole, setTargetRole] = useState(() => {
+    return localStorage.getItem('careersync_target_role') || 'SDE'
+  })
+  const [skillGap, setSkillGap] = useState(null)
+  const [internships, setInternships] = useState(null)
+  const [roadmap, setRoadmap] = useState(null)
+  const [loadingGap, setLoadingGap] = useState(false)
+  const [loadingInternships, setLoadingInternships] = useState(false)
+  const [loadingRoadmap, setLoadingRoadmap] = useState(false)
+  const [showRawText, setShowRawText] = useState(false)
+
+  useEffect(() => {
+    localStorage.setItem('careersync_target_role', targetRole)
+    let cancelled = false
+
+    async function run() {
+      setLoadingGap(true)
+      setLoadingInternships(true)
+      setLoadingRoadmap(true)
+      setSkillGap(null)
+      setInternships(null)
+      setRoadmap(null)
+
+      const [gapResult, internResult] = await Promise.all([
+        analyzeSkillGap(skills, targetRole),
+        fetchInternships(skills, 4),
+      ])
+
+      if (cancelled) return
+      setLoadingGap(false)
+      setLoadingInternships(false)
+
+      if (gapResult) {
+        setSkillGap(gapResult)
+        const missing = gapResult.missing_skills || []
+        if (missing.length > 0) {
+          setLoadingRoadmap(true)
+          const roadResult = await generateRoadmap(missing, targetRole)
+          if (cancelled) return
+          setLoadingRoadmap(false)
+          if (roadResult) setRoadmap(roadResult)
+        }
+      }
+
+      if (internResult) setInternships(internResult)
+    }
+
+    run()
+    return () => { cancelled = true }
+  }, [targetRole, skills])
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
@@ -83,21 +200,27 @@ export default function Dashboard() {
       <div className="relative z-10">
         <Navbar showLogout />
 
-        <main className="max-w-5xl mx-auto px-4 py-10">
+        <main className="max-w-6xl mx-auto px-4 py-10">
           <motion.header
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center mb-4"
           >
             <h1 className="text-3xl font-bold">
               {fullName ? `Welcome, ${fullName}` : 'Your Resume Dashboard'}
             </h1>
             {email && <p className="text-zinc-400 mt-2">{email}</p>}
+            {parsedAt && (
+              <p className="text-xs text-zinc-600 mt-1">
+                Parsed {new Date(parsedAt).toLocaleString()}
+              </p>
+            )}
+            <RoleSelector value={targetRole} onChange={setTargetRole} />
           </motion.header>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
             <SectionCard title="ATS Score" icon="⚡" delay={0}>
               {typeof atsScore === 'number' ? (
                 <div className="flex items-center gap-4">
@@ -107,7 +230,11 @@ export default function Dashboard() {
                     {atsScore}%
                   </div>
                   <p className="text-sm text-zinc-400">
-                    {atsScore >= 70 ? 'Great match' : atsScore >= 40 ? 'Room to improve' : 'Needs work'}
+                    {atsScore >= 70
+                      ? 'Great match'
+                      : atsScore >= 40
+                        ? 'Room to improve'
+                        : 'Needs work'}
                   </p>
                 </div>
               ) : (
@@ -124,7 +251,12 @@ export default function Dashboard() {
                       initial={{ scale: 0 }}
                       whileInView={{ scale: 1 }}
                       viewport={{ once: true }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 18, delay: i * 0.03 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 18,
+                        delay: i * 0.03,
+                      }}
                       className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-500/20 border border-purple-500/50 text-purple-200"
                     >
                       {skill}
@@ -141,8 +273,12 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   {education.map((e, i) => (
                     <div key={i} className="border-l-2 border-purple-500/40 pl-3">
-                      <p className="text-sm text-white font-medium">{e.degree || 'Degree'}</p>
-                      <p className="text-xs text-zinc-400">{e.institution || ''}</p>
+                      <p className="text-sm text-white font-medium">
+                        {e.degree || 'Degree'}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {e.institution || ''}
+                      </p>
                       <p className="text-xs text-zinc-500">{e.year || ''}</p>
                     </div>
                   ))}
@@ -157,9 +293,15 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   {experience.map((ex, i) => (
                     <div key={i} className="border-l-2 border-cyan-500/40 pl-3">
-                      <p className="text-sm text-white font-medium">{ex.role || 'Role'}</p>
-                      <p className="text-xs text-zinc-400">{ex.company || ''}</p>
-                      <p className="text-xs text-zinc-500">{ex.duration || ''}</p>
+                      <p className="text-sm text-white font-medium">
+                        {ex.role || 'Role'}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {ex.company || ''}
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        {ex.duration || ''}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -173,9 +315,13 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   {projects.map((p, i) => (
                     <div key={i} className="border-l-2 border-emerald-500/40 pl-3">
-                      <p className="text-sm text-white font-medium">{p.name || 'Project'}</p>
+                      <p className="text-sm text-white font-medium">
+                        {p.name || 'Project'}
+                      </p>
                       {p.tech_stack && (
-                        <p className="text-xs text-zinc-400">{p.tech_stack.join(', ')}</p>
+                        <p className="text-xs text-zinc-400">
+                          {p.tech_stack.join(', ')}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -185,21 +331,33 @@ export default function Dashboard() {
               )}
             </SectionCard>
 
-            <SectionCard title="Strengths & Weaknesses" icon="📊" delay={0.5}>
+            <SectionCard
+              title="Strengths & Weaknesses"
+              icon="📊"
+              delay={0.5}
+            >
               <div className="space-y-3">
                 {strengths.length > 0 && (
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-emerald-400 mb-1">Strengths</p>
+                    <p className="text-xs uppercase tracking-wide text-emerald-400 mb-1">
+                      Strengths
+                    </p>
                     {strengths.map((s, i) => (
-                      <p key={i} className="text-sm text-zinc-300">• {s}</p>
+                      <p key={i} className="text-sm text-zinc-300">
+                        • {s}
+                      </p>
                     ))}
                   </div>
                 )}
                 {weaknesses.length > 0 && (
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-red-400 mb-1">Weaknesses</p>
+                    <p className="text-xs uppercase tracking-wide text-red-400 mb-1">
+                      Weaknesses
+                    </p>
                     {weaknesses.map((w, i) => (
-                      <p key={i} className="text-sm text-zinc-300">• {w}</p>
+                      <p key={i} className="text-sm text-zinc-300">
+                        • {w}
+                      </p>
                     ))}
                   </div>
                 )}
@@ -210,7 +368,10 @@ export default function Dashboard() {
               {suggestions.length > 0 ? (
                 <ul className="space-y-2">
                   {suggestions.map((sugg, i) => (
-                    <li key={i} className="text-sm text-zinc-300 flex gap-2">
+                    <li
+                      key={i}
+                      className="text-sm text-zinc-300 flex gap-2"
+                    >
                       <span className="text-purple-400">→</span>
                       {sugg}
                     </li>
@@ -220,7 +381,65 @@ export default function Dashboard() {
                 <EmptyLine text="No suggestions extracted" />
               )}
             </SectionCard>
+
+            <SkillGapCard data={skillGap} loading={loadingGap} />
+
+            <InternshipCard data={internships} loading={loadingInternships} />
           </div>
+
+          <div className="mt-6">
+            <RoadmapCard data={roadmap} loading={loadingRoadmap} />
+          </div>
+
+          {rawText && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mt-6 bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 hover:border-purple-500/30 transition-colors"
+            >
+              <button
+                onClick={() => setShowRawText(!showRawText)}
+                className="w-full flex items-center gap-2 text-left"
+              >
+                <span className="text-lg">📄</span>
+                <h3 className="text-base font-semibold text-white">
+                  Resume Text Preview
+                </h3>
+                <motion.svg
+                  animate={{ rotate: showRawText ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  className="text-zinc-500 ml-auto"
+                >
+                  <path
+                    d="M6 9l6 6 6-6"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </motion.svg>
+              </button>
+              <AnimatePresence>
+                {showRawText && (
+                  <motion.pre
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden text-xs text-zinc-400 whitespace-pre-wrap font-mono leading-relaxed mt-3 border-t border-zinc-800 pt-4"
+                  >
+                    {rawText}
+                  </motion.pre>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </main>
       </div>
     </div>
