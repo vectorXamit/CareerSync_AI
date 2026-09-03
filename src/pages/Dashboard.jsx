@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import SkillGapCard from '../components/SkillGapCard'
 import InternshipCard from '../components/InternshipCard'
@@ -162,7 +162,6 @@ export default function Dashboard() {
   const weaknesses = parsed.weaknesses || []
   const suggestions = parsed.suggestions || []
   const parsedAt = parsed.parsed_at || null
-  const rawText = parsed.raw_text || ''
 
   return (
     <DashboardContent
@@ -177,7 +176,7 @@ export default function Dashboard() {
       weaknesses={weaknesses}
       suggestions={suggestions}
       parsedAt={parsedAt}
-      rawText={rawText}
+
     />
   )
 }
@@ -194,7 +193,6 @@ function DashboardContent({
   weaknesses,
   suggestions,
   parsedAt,
-  rawText,
 }) {
   const [targetRole, setTargetRole] = useState(() => {
     return localStorage.getItem('careersync_target_role') || 'SDE'
@@ -205,7 +203,7 @@ function DashboardContent({
   const [loadingGap, setLoadingGap] = useState(false)
   const [loadingInternships, setLoadingInternships] = useState(false)
   const [loadingRoadmap, setLoadingRoadmap] = useState(false)
-  const [showRawText, setShowRawText] = useState(false)
+
 
   useEffect(() => {
     localStorage.setItem('careersync_target_role', targetRole)
@@ -460,55 +458,7 @@ function DashboardContent({
             <RoadmapCard data={roadmap} loading={loadingRoadmap} />
           </div>
 
-          {rawText && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="mt-6 bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 hover:border-purple-500/30 transition-colors"
-            >
-              <button
-                onClick={() => setShowRawText(!showRawText)}
-                className="w-full flex items-center gap-2 text-left"
-              >
-                <span className="text-lg">📄</span>
-                <h3 className="text-base font-semibold text-white">
-                  Resume Text Preview
-                </h3>
-                <motion.svg
-                  animate={{ rotate: showRawText ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  className="text-zinc-500 ml-auto"
-                >
-                  <path
-                    d="M6 9l6 6 6-6"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </motion.svg>
-              </button>
-              <AnimatePresence>
-                {showRawText && (
-                  <motion.pre
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="overflow-hidden text-xs text-zinc-400 whitespace-pre-wrap font-mono leading-relaxed mt-3 border-t border-zinc-800 pt-4"
-                  >
-                    {rawText}
-                  </motion.pre>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
+
         </main>
       </div>
     </div>
