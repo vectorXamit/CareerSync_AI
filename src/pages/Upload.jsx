@@ -156,7 +156,7 @@ export default function Upload() {
         </div>
 
         <div className="text-center pt-10 px-4">
-          <h1 className="text-4xl font-bold">Phase 2 — Upload Resume</h1>
+          <h1 className="text-4xl font-bold">Upload Resume</h1>
           <p className="text-zinc-400 mt-2 max-w-xl mx-auto">
             Upload your resume to continue. We'll extract your experience, skills, and education using AI.
           </p>
