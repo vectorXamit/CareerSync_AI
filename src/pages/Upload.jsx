@@ -76,6 +76,7 @@ export default function Upload() {
       const res = await axios.post(`${API_URL}/resume/upload`, formData, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 90000,
+        withCredentials: true,
       })
       console.log('REAL DATA FROM BACKEND', res.data); localStorage.setItem('careerpilot_data', JSON.stringify(res.data))
       setParsing(false); setScanComplete(true); await new Promise((r) => setTimeout(r, 1000)); navigate('/')
@@ -84,8 +85,11 @@ export default function Upload() {
       setParsing(false)
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
         setError('Server is waking up — please try again in 30 seconds')
+      } else if (err.message?.includes('Network Error') || err.message?.includes('CORS') || !err.response) {
+        setError('Cannot reach server — backend may be down. Try again in a minute.')
       } else {
-        setError(err.response?.data?.detail || 'Backend error — try again')
+        const detail = err.response?.data?.detail || err.response?.data?.message || err.response?.statusText || 'Unknown error'
+        setError(`Server error (${err.response?.status}): ${detail}`)
       }
     }
   }
