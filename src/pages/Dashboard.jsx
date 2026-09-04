@@ -287,11 +287,21 @@ function DashboardContent({
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden font-[Inter,sans-serif]">
-      {/* ═══════════ BACKGROUND: GRID + PURPLE FADE ═══════════ */}
-      <div className="fixed inset-0 -z-10 bg-black">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff14_1px,transparent_1px),linear-gradient(to_bottom,#ffffff14_1px,transparent_1px)] bg-[size:60px_60px]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#a020f0]/40 bg-gradient-to-t from-[#a020f0]/60 via-[#a020f0]/20 to-transparent" />
-      </div>
+      {/* ═══════════ BACKGROUND: GRID + PURPLE FADE - FIXED ═══════════ */}
+<div className="fixed inset-0 -z-10 bg-black">
+  {/* Subtle Grid - more visible now */}
+  <div 
+    className="absolute inset-0 opacity-[0.08]"
+    style={{
+      backgroundImage: `linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)`,
+      backgroundSize: '60px 60px'
+    }}
+  />
+  {/* Top Purple Fade */}
+  <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-[#a020f0]/50 via-[#a020f0]/10 to-transparent" />
+  {/* Bottom Purple Fade */}
+  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-[#a020f0]/60 via-[#a020f0]/15 to-transparent" />
+</div>
 
       <div className="relative z-10">
         <Navbar showLogout />
