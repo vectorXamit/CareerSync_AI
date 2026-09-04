@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
@@ -28,7 +28,7 @@ function SectionCard({ title, icon, children, delay = 0, id, accent = 'purple' }
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay }}
       whileHover={{ scale: 1.015, y: -4 }}
-      className={`scroll-mt-28 relative bg-[rgba(18,18,20,0.8)] backdrop-blur-xl border border-white/[0.08] rounded-[20px] p-6 shadow-2xl transition-all duration-500 cursor-default overflow-hidden group ${accentMap[accent]}`}
+      className={`h-full flex flex-col scroll-mt-28 relative bg-[rgba(18,18,20,0.8)] backdrop-blur-xl border border-white/[0.08] rounded-[20px] p-6 shadow-2xl transition-all duration-500 cursor-default overflow-hidden group ${accentMap[accent]}`}
     >
       {/* Shimmer line on hover */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[rgba(124,58,237,0)] to-transparent group-hover:via-[rgba(124,58,237,0.4)] transition-all duration-700" />
@@ -36,7 +36,9 @@ function SectionCard({ title, icon, children, delay = 0, id, accent = 'purple' }
         <span className="text-base">{icon}</span>
         <h3 className="text-[14px] font-semibold tracking-wide text-zinc-200">{title}</h3>
       </div>
-      {children}
+      <div className="flex-1 flex flex-col justify-start">
+        {children}
+      </div>
     </motion.div>
   )
 }
@@ -242,18 +244,6 @@ function DashboardContent({
   const [loadingGap, setLoadingGap] = useState(false)
   const [loadingInternships, setLoadingInternships] = useState(false)
   const [loadingRoadmap, setLoadingRoadmap] = useState(false)
-  const mouseRef = useRef(null)
-
-  useEffect(() => {
-    const el = mouseRef.current
-    if (!el) return
-    const handler = (e) => {
-      el.style.setProperty('--mouse-x', e.clientX + 'px')
-      el.style.setProperty('--mouse-y', e.clientY + 'px')
-    }
-    window.addEventListener('mousemove', handler)
-    return () => window.removeEventListener('mousemove', handler)
-  }, [])
 
   useEffect(() => {
     localStorage.setItem('careersync_target_role', targetRole)
@@ -296,24 +286,11 @@ function DashboardContent({
   }, [targetRole, skills])
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white relative overflow-hidden font-[Inter,sans-serif]">
-      {/* ═══════════ ANIMATED AURORA BACKGROUND ═══════════ */}
-      <div className="fixed inset-0 -z-10 overflow-hidden bg-[#050507]">
-        {/* Orb 1 — Purple, top-left */}
-        <div className="absolute -top-[10%] -left-[10%] w-[800px] h-[800px] rounded-full bg-[#7C3AED] blur-[120px] opacity-25 animate-[float1_20s_ease-in-out_infinite_alternate]" />
-        {/* Orb 2 — Blue, top-right */}
-        <div className="absolute top-[20%] -right-[5%] w-[600px] h-[600px] rounded-full bg-[#3B82F6] blur-[100px] opacity-20 animate-[float2_25s_ease-in-out_infinite_alternate]" />
-        {/* Orb 3 — Violet, bottom-center */}
-        <div className="absolute -bottom-[10%] left-[30%] w-[900px] h-[900px] rounded-full bg-[#A855F7] blur-[140px] opacity-15 animate-[float3_30s_ease-in-out_infinite_alternate]" />
-        {/* Moving grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] animate-[gridMove_20s_linear_infinite] opacity-60" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:80px_80px] animate-[gridMove_30s_linear_infinite] opacity-40" />
-        {/* Noise texture */}
-        <div className="absolute inset-0" style={{ opacity: 0.03, backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)%25\'/%3E%3C/svg%3E")', backgroundRepeat: 'repeat', backgroundSize: '128px 128px' }} />
-        {/* Vignette */}
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, #050507 100%)' }} />
-        {/* Mouse spotlight */}
-        <div ref={mouseRef} className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ background: 'radial-gradient(circle 600px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(124,58,237,0.12), transparent 80%)' }} />
+    <div className="min-h-screen bg-black text-white relative overflow-hidden font-[Inter,sans-serif]">
+      {/* ═══════════ BACKGROUND: GRID + PURPLE FADE ═══════════ */}
+      <div className="fixed inset-0 -z-10 bg-black">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff14_1px,transparent_1px),linear-gradient(to_bottom,#ffffff14_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#a020f0]/40 bg-gradient-to-t from-[#a020f0]/60 via-[#a020f0]/20 to-transparent" />
       </div>
 
       <div className="relative z-10">
@@ -369,7 +346,7 @@ function DashboardContent({
           <StickyNav />
 
           {/* Main Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10 items-stretch">
             {/* Card 1: ATS Score */}
             <SectionCard id="ats" title="ATS Score" icon="⚡" delay={0} accent="emerald">
               {typeof atsScore === 'number' && atsScore > 0 ? (
@@ -681,12 +658,12 @@ function DashboardContent({
             </SectionCard>
 
             {/* Skill Gap */}
-            <div id="skillgap" className="scroll-mt-28">
+            <div id="skillgap" className="scroll-mt-28 h-full flex flex-col">
               <SkillGapCard data={skillGap} loading={loadingGap} />
             </div>
 
             {/* Internships */}
-            <div id="internships" className="scroll-mt-28">
+            <div id="internships" className="scroll-mt-28 h-full flex flex-col">
               <InternshipCard data={internships} loading={loadingInternships} />
             </div>
           </div>

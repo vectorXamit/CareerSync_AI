@@ -85,7 +85,7 @@ function InternshipItem({ intern, index }) {
 export default function InternshipCard({ data, loading }) {
   if (loading) {
     return (
-      <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6">
+      <div className="h-full flex flex-col bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-lg">💼</span>
           <h3 className="text-base font-semibold text-white">
@@ -111,7 +111,7 @@ export default function InternshipCard({ data, loading }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 hover:border-cyan-500/30 transition-colors"
+      className="h-full flex flex-col bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 hover:border-cyan-500/30 transition-colors"
     >
       <div className="flex items-center gap-2 mb-4">
         <span className="text-lg">💼</span>
@@ -123,7 +123,7 @@ export default function InternshipCard({ data, loading }) {
         </span>
       </div>
 
-      <div className="space-y-1 divide-y divide-zinc-800/50">
+      <div className="space-y-1 divide-y divide-zinc-800/50 flex-1">
         {data.map((intern, i) => (
           <InternshipItem key={intern.id || i} intern={intern} index={i} />
         ))}
