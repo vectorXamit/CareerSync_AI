@@ -73,10 +73,21 @@ export default function Upload() {
     try {
       const { data } = await supabase.auth.getSession(); const token = data.session?.access_token
       if (!token) { setError('Session expired'); setParsing(false); return }
-      const res = await axios.post(`${API_URL}/resume/upload`, formData, { headers: { Authorization: `Bearer ${token}` } })
+      const res = await axios.post(`${API_URL}/resume/upload`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 90000,
+      })
       console.log('REAL DATA FROM BACKEND', res.data); localStorage.setItem('careerpilot_data', JSON.stringify(res.data))
       setParsing(false); setScanComplete(true); await new Promise((r) => setTimeout(r, 1000)); navigate('/')
-    } catch (err) { console.error('Backend error:', err); setParsing(false); setError(err.response?.data?.detail || 'Backend error') }
+    } catch (err) {
+      console.error('Backend error:', err)
+      setParsing(false)
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Server is waking up — please try again in 30 seconds')
+      } else {
+        setError(err.response?.data?.detail || 'Backend error — try again')
+      }
+    }
   }
 
   return (
