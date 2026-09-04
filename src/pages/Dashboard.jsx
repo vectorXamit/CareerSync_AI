@@ -9,7 +9,16 @@ import {
   analyzeSkillGap,
   fetchInternships,
   generateRoadmap,
+  fetchMyRoadmaps,
 } from '../api/client'
+
+const ROLE_SKILLS_MAP = {
+  'SDE': ['Python', 'DSA', 'OOPs', 'SQL', 'Git', 'REST APIs', 'System Design'],
+  'Data Science': ['Python', 'SQL', 'Pandas', 'Machine Learning', 'Statistics', 'Data Visualization'],
+  'AI/ML Engineer': ['Python', 'Machine Learning', 'PyTorch', 'TensorFlow', 'NLP', 'Groq', 'LangChain'],
+  'Web Developer': ['HTML', 'CSS', 'JavaScript', 'React', 'FastAPI', 'PostgreSQL', 'Git'],
+  'Other': ['Python', 'Communication', 'Problem Solving'],
+}
 
 const TARGET_ROLES = ['SDE', 'Data Science', 'AI/ML Engineer', 'Web Developer', 'Other']
 
@@ -222,6 +231,50 @@ export default function Dashboard() {
   )
 }
 
+// Derive Skill Gap from real backend roadmaps (missing skills) when available
+function buildSkillGapFromRoadmaps(myRoadmaps, roadResult, skills, targetRole) {
+  const required = ROLE_SKILLS_MAP[targetRole] || ROLE_SKILLS_MAP['Other']
+  const userLowerSet = new Set(skills.map((s) => s.toLowerCase()))
+
+  // Collect missing skills from the current generated roadmap first
+  let missing = (roadResult?.roadmap || []).map((s) => s.skill).filter(Boolean)
+
+  // If none, fall back to the user's previously generated roadmaps (real backend data)
+  if (missing.length === 0) {
+    const list = Array.isArray(myRoadmaps) ? myRoadmaps : []
+    for (const rm of list) {
+      const steps = rm?.roadmap || rm?.steps || []
+      if (Array.isArray(steps)) {
+        const m = steps.map((s) => s.skill || s.title).filter(Boolean)
+        if (m.length > 0) { missing = m; break }
+      }
+    }
+  }
+
+  // Build matched/missing sets consistent with the role map
+  const matched = required.filter((s) => userLowerSet.has(s.toLowerCase()))
+  const missingFromMap = required.filter((s) => !userLowerSet.has(s.toLowerCase()))
+  const extra = missing.filter((s) => !required.some((r) => r.toLowerCase() === s.toLowerCase()))
+
+  const finalMissing = [...new Set([...missingFromMap, ...extra])]
+  const matchScore = required.length > 0
+    ? Math.round((matched.length / required.length) * 100)
+    : 0
+
+  return {
+    student_id: 'local',
+    target_role: targetRole,
+    match_score: matchScore,
+    matched_skills: matched,
+    missing_skills: finalMissing,
+    gaps: [
+      ...matched.map((s) => ({ skill: s, status: 'matched', level: 'Intermediate' })),
+      ...finalMissing.map((s) => ({ skill: s, status: 'missing', level: 'Beginner' })),
+    ],
+    summary: `Good foundation with ${matched.slice(0, 3).join(', ') || 'some skills'}. Focus on learning ${finalMissing.slice(0, 3).join(', ') || 'new skills'} to become ${targetRole} ready.`,
+  }
+}
+
 function DashboardContent({
   fullName,
   email,
@@ -257,28 +310,36 @@ function DashboardContent({
       setInternships(null)
       setRoadmap(null)
 
-      const [gapResult, internResult] = await Promise.all([
+      // Compute local skill gap instantly so roadmap can start immediately
+      const localGap = (() => {
+        const required = ROLE_SKILLS_MAP[targetRole] || ROLE_SKILLS_MAP['Other']
+        const userSet = new Set(skills.map((s) => s.toLowerCase()))
+        return required.filter((s) => !userSet.has(s.toLowerCase()))
+      })()
+
+      // Fire all in parallel — roadmap uses local missing skills immediately.
+      // Skill gap first tries real backend roadmaps (my-roadmaps), falls back to local.
+      const [gapResult, internResult, roadResult, myRoadmaps] = await Promise.all([
         analyzeSkillGap(skills, targetRole),
         fetchInternships(skills, 4),
+        localGap.length > 0
+          ? generateRoadmap(localGap, targetRole)
+          : Promise.resolve(null),
+        fetchMyRoadmaps(),
       ])
 
       if (cancelled) return
       setLoadingGap(false)
       setLoadingInternships(false)
+      setLoadingRoadmap(false)
 
-      if (gapResult) {
-        setSkillGap(gapResult)
-        const missing = gapResult.missing_skills || []
-        if (missing.length > 0) {
-          setLoadingRoadmap(true)
-          const roadResult = await generateRoadmap(missing, targetRole)
-          if (cancelled) return
-          setLoadingRoadmap(false)
-          if (roadResult) setRoadmap(roadResult)
-        }
-      }
+      // Use real roadmap's missing skills to build the Skill Gap card
+      const realGap = buildSkillGapFromRoadmaps(myRoadmaps, roadResult, skills, targetRole)
+      if (realGap) setSkillGap(realGap)
+      else if (gapResult) setSkillGap(gapResult)
 
       if (internResult) setInternships(internResult)
+      if (roadResult) setRoadmap(roadResult)
     }
 
     run()

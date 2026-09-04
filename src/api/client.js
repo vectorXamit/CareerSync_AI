@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
+  timeout: 6000,
 })
 
 api.interceptors.request.use(async (config) => {
@@ -138,7 +139,32 @@ export async function getMe() {
   }
 }
 
+// ========== CACHE HELPERS ==========
+function getCached(key) {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    const { data, ts } = JSON.parse(raw)
+    if (Date.now() - ts > 1000 * 60 * 30) return null // 30 min expiry
+    return data
+  } catch { return null }
+}
+
+function setCache(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }))
+  } catch { /* quota exceeded — ignore */ }
+}
+
+function skillsHash(skills) {
+  return [...skills].sort().join(',').toLowerCase()
+}
+
 export async function analyzeSkillGap(skills, targetRole) {
+  const cacheKey = `cs_gap_${targetRole}_${skillsHash(skills)}`
+  const cached = getCached(cacheKey)
+  if (cached) return cached
+
   // Try backend first
   try {
     let studentId = null
@@ -150,18 +176,24 @@ export async function analyzeSkillGap(skills, targetRole) {
       const res = await api.post(`/analyze/${studentId}`, {
         target_role: targetRole,
       })
+      setCache(cacheKey, res.data)
       return res.data
     }
   } catch (err) {
     console.warn('Backend analyze failed, using local fallback:', err.message)
   }
   // Local fallback — mirrors backend gap_engine.py logic
+  // NOTE: not cached so real data isn't blocked when backend comes online
   return computeSkillGapLocally(skills, targetRole)
 }
 
 export async function fetchInternships(skills, limit = 4) {
+  const cacheKey = `cs_intern_${limit}_${skillsHash(skills)}`
+  const cached = getCached(cacheKey)
+  if (cached) return cached
+
   try {
-    const res = await api.get('/internship/recommendations', {
+    const res = await api.get('/internship/internships/recommendations', {
       params: { limit },
     })
     const data = res.data
@@ -169,25 +201,51 @@ export async function fetchInternships(skills, limit = 4) {
     if (Array.isArray(data)) result = data
     else if (data && Array.isArray(data.internships)) result = data.internships
     else if (Array.isArray(data?.data)) result = data.data
-    if (result && result.length > 0) return result
+    if (result && result.length > 0) {
+      setCache(cacheKey, result)
+      return result
+    }
   } catch (err) {
     console.warn('Backend internships failed, using local fallback:', err.message)
   }
+  // Local fallback — NOT cached so real data isn't blocked
   return computeInternshipsLocally(skills, limit)
 }
 
 export async function generateRoadmap(missingSkills, targetRole) {
+  const cacheKey = `cs_road_${targetRole}_${skillsHash(missingSkills)}`
+  const cached = getCached(cacheKey)
+  if (cached) return cached
+
   // Try backend first
   try {
     const res = await api.post('/roadmap/generate', null, {
       params: { target_role: targetRole },
     })
+    setCache(cacheKey, res.data)
     return res.data
   } catch (err) {
     console.warn('Backend roadmap failed, using local fallback:', err.message)
   }
-  // Local fallback — generates basic roadmap
+  // Local fallback — NOT cached so real data isn't blocked
   return generateRoadmapLocally(missingSkills, targetRole)
+}
+
+// Fetch the user's previously generated AI roadmaps (real backend data)
+export async function fetchMyRoadmaps() {
+  try {
+    const res = await api.get('/roadmap/my-roadmaps')
+    const data = res.data
+    // Handle possible nested shapes: array, {roadmaps:[...]}, {data:[...]}
+    let roadmaps = null
+    if (Array.isArray(data)) roadmaps = data
+    else if (data && Array.isArray(data.roadmaps)) roadmaps = data.roadmaps
+    else if (data && Array.isArray(data.data)) roadmaps = data.data
+    if (roadmaps && roadmaps.length > 0) return roadmaps
+  } catch (err) {
+    console.warn('Fetch my-roadmaps failed:', err.message)
+  }
+  return null
 }
 
 export default api
