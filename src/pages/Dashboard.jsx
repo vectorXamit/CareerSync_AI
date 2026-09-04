@@ -287,20 +287,22 @@ function DashboardContent({
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden font-[Inter,sans-serif]">
-      {/* ═══════════ BACKGROUND: GRID + PURPLE FADE - FIXED ═══════════ */}
-<div className="fixed inset-0 -z-10 bg-black">
-  {/* Subtle Grid - more visible now */}
-  <div 
-    className="absolute inset-0 opacity-[0.08]"
+      {/* ═══════════ BACKGROUND: GRID + PURPLE FADE - FIXED V2 ═══════════ */}
+<div className="fixed inset-0 -z-10 bg-[#07070a]">
+  {/* Grid - ab visible hoga */}
+  <div
+    className="absolute inset-0 opacity-[0.18]"
     style={{
-      backgroundImage: `linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)`,
-      backgroundSize: '60px 60px'
+      backgroundImage: `linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px)`,
+      backgroundSize: '48px 48px'
     }}
   />
-  {/* Top Purple Fade */}
-  <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-[#a020f0]/50 via-[#a020f0]/10 to-transparent" />
-  {/* Bottom Purple Fade */}
-  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-[#a020f0]/60 via-[#a020f0]/15 to-transparent" />
+  {/* Top Purple Glow */}
+  <div className="absolute top-0 inset-x-0 h- bg-gradient-to-b from-violet-600/40 via-violet-800/15 to-transparent" />
+  {/* Bottom Purple Glow */}
+  <div className="absolute bottom-0 inset-x-0 h- bg-gradient-to-t from-violet-600/40 via-violet-800/15 to-transparent" />
+  {/* Center soft glow */}
+  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w- h- bg-violet-600/[0.12] rounded-full blur-" />
 </div>
 
       <div className="relative z-10">
