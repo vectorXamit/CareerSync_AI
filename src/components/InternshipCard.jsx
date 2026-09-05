@@ -132,6 +132,15 @@ export default function InternshipCard({ data, loading, real = false }) {
           <InternshipItem key={intern.id || i} intern={intern} index={i} />
         ))}
       </div>
+
+      <a
+        href="https://internshala.com/internships/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 block text-center text-[11px] text-zinc-500 hover:text-cyan-300 transition-colors border-t border-zinc-800/50 pt-3"
+      >
+        Browse more internships on Internshala →
+      </a>
     </motion.div>
   )
 }

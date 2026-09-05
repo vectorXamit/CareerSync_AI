@@ -303,59 +303,86 @@ function normalizeRoadmapsList(data) {
 }
 
 // The internships endpoint is unauthenticated and ranks against the backend's
-// OWN stored resume — so its scores are useless. Re-rank the (real) listings
-// against the CURRENT user's skills so the card actually reflects the resume.
-function rankInternshipsByUserSkills(pool, userSkills) {
+// OWN stored resume — and the pool is aggressively scraped, so it has no skill
+// tags and lots of non-engineering roles. We therefore re-rank the (real)
+// listings against the CURRENT user's skills + target role and drop obvious
+// irrelevant noise so the card only shows genuinely relevant entries.
+const ROLE_INTERN_KEYWORDS = {
+  'SDE': ['software', 'developer', 'engineer', 'backend', 'frontend', 'full stack', 'fullstack', 'devops', 'sdet', 'qa', 'tester', 'java', 'python', 'cloud', 'api', 'security'],
+  'Data Science': ['data', 'analyst', 'analytics', 'machine learning', 'data science', 'statistics', 'python', 'sql', 'power bi', 'tableau'],
+  'AI/ML Engineer': ['ai', 'machine learning', 'ml', 'deep learning', 'nlp', 'llm', 'neural', 'python', 'tensorflow', 'pytorch', 'langchain', 'engineer'],
+  'Web Developer': ['web', 'frontend', 'front-end', 'react', 'javascript', 'html', 'css', 'node', 'full stack', 'ui', 'ux', 'designer'],
+  'Other': ['engineer', 'developer', 'software', 'intern', 'data', 'design', 'it', 'technical'],
+}
+
+const TECH_TITLE_REGEX = /engineer|developer|software|data|analyst|scientist|devops|sdet|qa|tester|cloud|frontend|backend|full.?stack|security|intern|web|android|ios|ai|ml|python|java|node|technical/i
+
+// Drop obvious non-engineering roles (sales/ops/accounting/marketing) BEFORE
+// ranking so a stray skill word in their description can't push them on top.
+const NOISE_TITLE_REGEX = /sales|marketing|business development|account\b|go-to-market|partnerships?|payroll|recruit|acquisition|representative|customer support|support specialist|vice president|\bdirector\b|operations|leadership|dispatch/i
+
+function rankInternshipsByUserSkills(pool, userSkills, targetRole) {
   const lowerSkills = (userSkills || [])
     .map((s) => String(s).toLowerCase())
     .filter((s) => s.length >= 3)
   const lowerSet = new Set(lowerSkills)
+  const kw = ROLE_INTERN_KEYWORDS[targetRole] || ROLE_INTERN_KEYWORDS['Other']
 
   const scored = pool
     .map((intern, order) => {
       if (!intern || typeof intern !== 'object') return null
       const req = Array.isArray(intern.required_skills) ? intern.required_skills : []
-      let matched = req.filter((s) => lowerSet.has(String(s).toLowerCase()))
+      const haystack = [intern.title, intern.company, intern.description]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
 
-      // No requirements listed? fall back to matching skill names in the listing text
+      let matched = req.filter((s) => lowerSet.has(String(s).toLowerCase()))
       if (matched.length === 0) {
-        const haystack = [intern.title, intern.company, intern.description]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
         matched = lowerSkills.filter((s) => haystack.includes(s))
       }
 
+      const kwHits = matched.length === 0
+        ? kw.filter((w) => String(intern.title).toLowerCase().includes(w))
+        : []
+
       let score = 0
-      if (req.length > 0) {
+      if (req.length > 0 && matched.length > 0) {
         score = Math.round((matched.length / req.length) * 100)
       } else if (matched.length > 0) {
         score = Math.min(90, Math.round(20 + (matched.length / Math.max(lowerSet.size, 1)) * 120))
+      } else if (kwHits.length > 0) {
+        score = 40
       }
 
       return {
         ...intern,
         required_skills: req,
-        match_score: Math.max(Number(intern.match_score) || 0, score),
-        matched_skills: [...new Set(matched)],
+        match_score: score,
+        matched_skills: [...new Set(matched.length > 0 ? matched : kwHits.slice(0, 2))],
         _order: order,
       }
     })
     .filter(Boolean)
 
   scored.sort((a, b) => b.match_score - a.match_score || a._order - b._order)
-  return scored
+
+  // Real entries matched to the resume first; only fill remaining slots with
+  // tech-titled entries (never pure sales/manager/marketing noise)
+  const matchedList = scored.filter((s) => s.match_score > 0)
+  const restTech = scored.filter((s) => s.match_score === 0 && TECH_TITLE_REGEX.test(s.title))
+  return [...matchedList, ...restTech]
 }
 
-export async function fetchInternships(userSkills, limit = 4) {
-  const cacheKey = `cs_intern3_${limit}_${skillsHash(userSkills || [])}`
+export async function fetchInternships(userSkills, limit = 4, targetRole = 'Other') {
+  const cacheKey = `cs_intern4_${targetRole}_${limit}_${skillsHash(userSkills || [])}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
-  // Fetch a bigger pool of REAL listings, then rank against the user's own skills
+  // Fetch the full real pool, then rank against the user's own skills + role
   try {
     const res = await api.get('/internship/internships/recommendations', {
-      params: { limit: Math.max(limit, 20) },
+      params: { limit: 50 },
     })
     const data = res.data
     let pool = null
@@ -363,8 +390,14 @@ export async function fetchInternships(userSkills, limit = 4) {
     else if (data && Array.isArray(data.internships)) pool = data.internships
     else if (Array.isArray(data?.data)) pool = data.data
     if (pool && pool.length > 0) {
-      const ranked = rankInternshipsByUserSkills(pool, (userSkills || []).map((s) => s.name || s))
-        .slice(0, limit)
+      const cleanPool = pool.some((i) => !NOISE_TITLE_REGEX.test(i.title || ''))
+        ? pool.filter((i) => !NOISE_TITLE_REGEX.test(i.title || ''))
+        : pool
+      const ranked = rankInternshipsByUserSkills(
+        cleanPool,
+        (userSkills || []).map((s) => s.name || s),
+        targetRole,
+      ).slice(0, limit)
       const out = { payload: ranked, real: true }
       setCache(cacheKey, out)
       return out

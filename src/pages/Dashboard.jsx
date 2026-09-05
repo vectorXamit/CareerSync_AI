@@ -332,7 +332,7 @@ function DashboardContent({
       // Fire in parallel — roadmap + internships come from the backend when it
       // responds; both functions fall back to local samples only on failure.
       const [internRes, roadRes, myRoadmaps] = await Promise.all([
-        fetchInternships(skills, 4),
+        fetchInternships(skills, 4, targetRole),
         localGap.length > 0
           ? generateRoadmap(localGap, targetRole)
           : Promise.resolve({ payload: null, real: false }),
