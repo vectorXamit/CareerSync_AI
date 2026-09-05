@@ -198,22 +198,174 @@ export async function analyzeSkillGap(skills, targetRole) {
   return { payload: computeSkillGapLocally(skills, targetRole), real: false }
 }
 
-export async function fetchInternships(skills, limit = 4) {
-  const cacheKey = `cs_intern2_${limit}_${skillsHash(skills)}`
+// ══════════ SHAPE NORMALIZERS ══════════
+// The backend sometimes nests roadmap data differently or misses per-listing
+// skill info. These normalizers make ANY plausible backend shape render correctly.
+
+function looksLikeSteps(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return false
+  const first = arr[0]
+  if (!first || typeof first !== 'object' || Array.isArray(first)) return false
+  const stepStrong = ['skill', 'step_no', 'estimated_days', 'description', 'is_completed', 'days', 'duration_days']
+    .some((k) => k in first)
+  const resourceOnly = 'url' in first && 'type' in first
+  const titleOnly = 'title' in first && !('url' in first) && !('type' in first)
+  return (stepStrong && !resourceOnly) || titleOnly
+}
+
+function findSteps(value, depth = 0) {
+  if (!value || typeof value !== 'object' || depth > 6) return null
+  if (looksLikeSteps(value)) return value
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (item && typeof item === 'object') {
+        const found = findSteps(item, depth + 1)
+        if (found) return found
+      }
+    }
+    return null
+  }
+  for (const key of Object.keys(value)) {
+    const found = findSteps(value[key], depth + 1)
+    if (found) return found
+  }
+  return null
+}
+
+function normalizeStep(step, idx) {
+  if (!step || typeof step !== 'object') return null
+  const skill = String(
+    step.skill || (Array.isArray(step.skills) && step.skills[0]) || step.title || step.name || step.course || '',
+  )
+  const title = String(step.title || step.skill || step.name || step.course || `Step ${idx + 1}`)
+  const description = String(step.description || step.summary || step.details || '')
+  const resources = Array.isArray(step.resources)
+    ? step.resources
+        .map((r) => (r && typeof r === 'object'
+          ? {
+              type: String(r.type || 'link'),
+              title: String(r.title || 'Resource'),
+              url: String(r.url || r.link || '#'),
+            }
+          : null))
+        .filter(Boolean)
+    : []
+  const estimated_days = Number(step.estimated_days ?? step.days ?? step.estimated_days_days ?? step.duration_days ?? 3) || 3
+  return {
+    step_no: Number(step.step_no ?? idx + 1) || idx + 1,
+    skill,
+    title,
+    description,
+    resources,
+    estimated_days,
+    is_completed: Boolean(step.is_completed || step.completed),
+  }
+}
+
+// Turn any plausible backend roadmap payload into the shape the cards expect.
+function normalizeRoadmapPayload(raw) {
+  const steps = (findSteps(raw) || []).map(normalizeStep).filter(Boolean)
+  const total = Number(raw?.total_estimated_days) ||
+    Number(raw?.total_days) ||
+    steps.reduce((sum, s) => sum + (s.estimated_days || 0), 0)
+  return {
+    student_id: raw?.student_id || 'backend',
+    target_role: raw?.target_role || '',
+    roadmap: steps,
+    total_estimated_days: total || steps.length * 3,
+    generated_at: raw?.generated_at || raw?.created_at || new Date().toISOString(),
+  }
+}
+
+function normalizeRoadmapsList(data) {
+  let list = data
+  if (data && !Array.isArray(data)) {
+    if (Array.isArray(data.roadmaps)) list = data.roadmaps
+    else if (Array.isArray(data.data)) list = data.data
+    else if (Array.isArray(data.items)) list = data.items
+    else if (Array.isArray(data.results)) list = data.results
+  }
+  if (!Array.isArray(list)) return null
+  const items = list
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null
+      const steps = (findSteps(item) || []).map(normalizeStep).filter(Boolean)
+      if (steps.length === 0) return null
+      return {
+        ...item,
+        roadmap: steps,
+        total_estimated_days: item.total_estimated_days || item.total_days || steps.length * 3,
+        generated_at: item.generated_at || item.created_at || null,
+      }
+    })
+    .filter(Boolean)
+  return items.length > 0 ? items : null
+}
+
+// The internships endpoint is unauthenticated and ranks against the backend's
+// OWN stored resume — so its scores are useless. Re-rank the (real) listings
+// against the CURRENT user's skills so the card actually reflects the resume.
+function rankInternshipsByUserSkills(pool, userSkills) {
+  const lowerSkills = (userSkills || [])
+    .map((s) => String(s).toLowerCase())
+    .filter((s) => s.length >= 3)
+  const lowerSet = new Set(lowerSkills)
+
+  const scored = pool
+    .map((intern, order) => {
+      if (!intern || typeof intern !== 'object') return null
+      const req = Array.isArray(intern.required_skills) ? intern.required_skills : []
+      let matched = req.filter((s) => lowerSet.has(String(s).toLowerCase()))
+
+      // No requirements listed? fall back to matching skill names in the listing text
+      if (matched.length === 0) {
+        const haystack = [intern.title, intern.company, intern.description]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+        matched = lowerSkills.filter((s) => haystack.includes(s))
+      }
+
+      let score = 0
+      if (req.length > 0) {
+        score = Math.round((matched.length / req.length) * 100)
+      } else if (matched.length > 0) {
+        score = Math.min(90, Math.round(20 + (matched.length / Math.max(lowerSet.size, 1)) * 120))
+      }
+
+      return {
+        ...intern,
+        required_skills: req,
+        match_score: Math.max(Number(intern.match_score) || 0, score),
+        matched_skills: [...new Set(matched)],
+        _order: order,
+      }
+    })
+    .filter(Boolean)
+
+  scored.sort((a, b) => b.match_score - a.match_score || a._order - b._order)
+  return scored
+}
+
+export async function fetchInternships(userSkills, limit = 4) {
+  const cacheKey = `cs_intern3_${limit}_${skillsHash(userSkills || [])}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
+  // Fetch a bigger pool of REAL listings, then rank against the user's own skills
   try {
     const res = await api.get('/internship/internships/recommendations', {
-      params: { limit },
+      params: { limit: Math.max(limit, 20) },
     })
     const data = res.data
-    let result = null
-    if (Array.isArray(data)) result = data
-    else if (data && Array.isArray(data.internships)) result = data.internships
-    else if (Array.isArray(data?.data)) result = data.data
-    if (result && result.length > 0) {
-      const out = { payload: result, real: true }
+    let pool = null
+    if (Array.isArray(data)) pool = data
+    else if (data && Array.isArray(data.internships)) pool = data.internships
+    else if (Array.isArray(data?.data)) pool = data.data
+    if (pool && pool.length > 0) {
+      const ranked = rankInternshipsByUserSkills(pool, (userSkills || []).map((s) => s.name || s))
+        .slice(0, limit)
+      const out = { payload: ranked, real: true }
       setCache(cacheKey, out)
       return out
     }
@@ -221,21 +373,24 @@ export async function fetchInternships(skills, limit = 4) {
     console.warn('Backend internships failed, using local fallback:', err.message)
   }
   // Local fallback — NOT cached so real data isn't blocked
-  return { payload: computeInternshipsLocally(skills, limit), real: false }
+  return { payload: computeInternshipsLocally(userSkills || [], limit), real: false }
 }
 
 export async function generateRoadmap(missingSkills, targetRole) {
-  const cacheKey = `cs_road2_${targetRole}_${skillsHash(missingSkills)}`
+  const cacheKey = `cs_road3_${targetRole}_${skillsHash(missingSkills)}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
-  // Try backend first
+  // Try backend first — accept ANY response shape containing roadmap steps
   try {
     const res = await api.post('/roadmap/generate', null, {
       params: { target_role: targetRole },
     })
-    const payload = res.data
-    if (payload && Array.isArray(payload.roadmap) && payload.roadmap.length > 0) {
+    const raw = res.data
+    try { localStorage.setItem('careersync_debug_roadmap', JSON.stringify(raw).slice(0, 20000)) } catch { /* ignore */ }
+    console.log('[roadmap] backend response:', raw)
+    const payload = normalizeRoadmapPayload(raw)
+    if (payload.roadmap.length > 0) {
       const out = { payload, real: true }
       setCache(cacheKey, out)
       return out
@@ -251,13 +406,8 @@ export async function generateRoadmap(missingSkills, targetRole) {
 export async function fetchMyRoadmaps() {
   try {
     const res = await api.get('/roadmap/my-roadmaps')
-    const data = res.data
-    // Handle possible nested shapes: array, {roadmaps:[...]}, {data:[...]}
-    let roadmaps = null
-    if (Array.isArray(data)) roadmaps = data
-    else if (data && Array.isArray(data.roadmaps)) roadmaps = data.roadmaps
-    else if (data && Array.isArray(data.data)) roadmaps = data.data
-    if (roadmaps && roadmaps.length > 0) return roadmaps
+    const normalized = normalizeRoadmapsList(res.data)
+    if (normalized) return normalized
   } catch (err) {
     console.warn('Fetch my-roadmaps failed:', err.message)
   }
