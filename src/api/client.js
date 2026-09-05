@@ -375,14 +375,16 @@ function rankInternshipsByUserSkills(pool, userSkills, targetRole) {
 }
 
 export async function fetchInternships(userSkills, limit = 4, targetRole = 'Other') {
-  const cacheKey = `cs_intern4_${targetRole}_${limit}_${skillsHash(userSkills || [])}`
+  const cacheKey = `cs_intern5_${targetRole}_${limit}_${skillsHash(userSkills || [])}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
-  // Fetch the full real pool, then rank against the user's own skills + role
+  // Ask the backend to rank with THIS user's skills (server-side, personal),
+  // then re-rank the full real pool against the same skills + target role here.
   try {
+    const skillNames = (userSkills || []).map((s) => (typeof s === 'string' ? s : s.name)).filter(Boolean)
     const res = await api.get('/internship/internships/recommendations', {
-      params: { limit: 50 },
+      params: { limit: 50, skills: skillNames.join(',') },
     })
     const data = res.data
     let pool = null
