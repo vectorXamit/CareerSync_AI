@@ -82,7 +82,7 @@ function InternshipItem({ intern, index }) {
   )
 }
 
-export default function InternshipCard({ data, loading }) {
+export default function InternshipCard({ data, loading, real = false }) {
   if (loading) {
     return (
       <div className="h-full flex flex-col bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6">
@@ -118,8 +118,12 @@ export default function InternshipCard({ data, loading }) {
         <h3 className="text-base font-semibold text-white">
           Top Internships
         </h3>
-        <span className="ml-auto text-xs text-zinc-500">
-          {data.length} found
+        <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+          real
+            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+            : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+        }`}>
+          {real ? `${data.length} live listings` : 'Sample data'}
         </span>
       </div>
 

@@ -107,7 +107,7 @@ function RoadmapStep({ step, index, total }) {
   )
 }
 
-export default function RoadmapCard({ data, loading }) {
+export default function RoadmapCard({ data, loading, real = false }) {
   if (loading) {
     return (
       <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6">
@@ -164,6 +164,13 @@ export default function RoadmapCard({ data, loading }) {
             </span>
           </>
         )}
+        <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+          real
+            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+            : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+        }`}>
+          {real ? 'AI-generated' : 'Sample roadmap'}
+        </span>
       </div>
 
       <div>

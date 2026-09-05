@@ -44,7 +44,7 @@ function ProgressBar({ value, max = 100, color = '#f87171' }) {
   )
 }
 
-export default function SkillGapCard({ data, loading }) {
+export default function SkillGapCard({ data, loading, real = false }) {
   if (loading) {
     return (
       <div className="h-full flex flex-col justify-between bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-[20px] p-6 shadow-2xl">
@@ -87,6 +87,13 @@ export default function SkillGapCard({ data, loading }) {
         <div className="flex items-center gap-2.5 mb-5">
           <span className="text-base">🎯</span>
           <h3 className="text-[14px] font-semibold tracking-wide text-zinc-200">Skill Gap</h3>
+          <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+            real
+              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+              : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+          }`}>
+            {real ? 'AI Data • Live' : 'Estimate • Offline'}
+          </span>
         </div>
 
         <div className="flex items-center gap-5 mb-5">

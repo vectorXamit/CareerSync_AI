@@ -6,7 +6,6 @@ import SkillGapCard from '../components/SkillGapCard'
 import InternshipCard from '../components/InternshipCard'
 import RoadmapCard from '../components/RoadmapCard'
 import {
-  analyzeSkillGap,
   fetchInternships,
   generateRoadmap,
   fetchMyRoadmaps,
@@ -231,47 +230,57 @@ export default function Dashboard() {
   )
 }
 
-// Derive Skill Gap from real backend roadmaps (missing skills) when available
-function buildSkillGapFromRoadmaps(myRoadmaps, roadResult, skills, targetRole) {
+// Derive Skill Gap from real backend data — the missing skills come from the
+// user's actual AI roadmaps (current generate + previously saved my-roadmaps).
+// Returns { payload, real } where real = based on actual backend data.
+function buildSkillGapFromRoadmaps(roadRes, myRoadmaps, skills, targetRole) {
   const required = ROLE_SKILLS_MAP[targetRole] || ROLE_SKILLS_MAP['Other']
-  const userLowerSet = new Set(skills.map((s) => s.toLowerCase()))
+  const userLowerSet = new Set(skills.map((s) => String(s).toLowerCase()))
 
-  // Collect missing skills from the current generated roadmap first
-  let missing = (roadResult?.roadmap || []).map((s) => s.skill).filter(Boolean)
+  // Missing skills straight from the current AI roadmap (if it is real data)
+  let roadmapSkills =
+    roadRes?.real && Array.isArray(roadRes?.payload?.roadmap)
+      ? roadRes.payload.roadmap.map((s) => s.skill).filter(Boolean)
+      : []
 
-  // If none, fall back to the user's previously generated roadmaps (real backend data)
-  if (missing.length === 0) {
-    const list = Array.isArray(myRoadmaps) ? myRoadmaps : []
-    for (const rm of list) {
+  // Otherwise use previously generated (real) roadmaps
+  if (roadmapSkills.length === 0) {
+    for (const rm of Array.isArray(myRoadmaps) ? myRoadmaps : []) {
       const steps = rm?.roadmap || rm?.steps || []
-      if (Array.isArray(steps)) {
-        const m = steps.map((s) => s.skill || s.title).filter(Boolean)
-        if (m.length > 0) { missing = m; break }
-      }
+      const m = steps.map((s) => s.skill || s.title).filter(Boolean)
+      if (m.length > 0) { roadmapSkills = m; break }
     }
   }
 
-  // Build matched/missing sets consistent with the role map
-  const matched = required.filter((s) => userLowerSet.has(s.toLowerCase()))
-  const missingFromMap = required.filter((s) => !userLowerSet.has(s.toLowerCase()))
-  const extra = missing.filter((s) => !required.some((r) => r.toLowerCase() === s.toLowerCase()))
+  const real = roadmapSkills.length > 0 && skills.length > 0
 
-  const finalMissing = [...new Set([...missingFromMap, ...extra])]
-  const matchScore = required.length > 0
-    ? Math.round((matched.length / required.length) * 100)
+  // Role requirements + the AI-identified gaps together
+  const base = roadmapSkills.length > 0
+    ? [...new Set([...required, ...roadmapSkills])]
+    : required
+
+  const matched = base.filter((s) => userLowerSet.has(String(s).toLowerCase()))
+  const missing = [...new Set(base.filter((s) => !userLowerSet.has(String(s).toLowerCase())))]
+  const matchScore = base.length > 0
+    ? Math.round((matched.length / base.length) * 100)
     : 0
 
   return {
-    student_id: 'local',
-    target_role: targetRole,
-    match_score: matchScore,
-    matched_skills: matched,
-    missing_skills: finalMissing,
-    gaps: [
-      ...matched.map((s) => ({ skill: s, status: 'matched', level: 'Intermediate' })),
-      ...finalMissing.map((s) => ({ skill: s, status: 'missing', level: 'Beginner' })),
-    ],
-    summary: `Good foundation with ${matched.slice(0, 3).join(', ') || 'some skills'}. Focus on learning ${finalMissing.slice(0, 3).join(', ') || 'new skills'} to become ${targetRole} ready.`,
+    payload: {
+      student_id: 'local',
+      target_role: targetRole,
+      match_score: matchScore,
+      matched_skills: matched,
+      missing_skills: missing,
+      gaps: [
+        ...matched.map((s) => ({ skill: s, status: 'matched', level: 'Intermediate' })),
+        ...missing.map((s) => ({ skill: s, status: 'missing', level: 'Beginner' })),
+      ],
+      summary: real
+        ? `Based on your AI roadmap: focus on ${missing.slice(0, 3).join(', ') || 'building more skills'} to become ${targetRole} ready.`
+        : `Good foundation with ${matched.slice(0, 3).join(', ') || 'some skills'}. Focus on learning ${missing.slice(0, 3).join(', ') || 'new skills'} to become ${targetRole} ready.`,
+    },
+    real,
   }
 }
 
@@ -294,6 +303,9 @@ function DashboardContent({
   const [skillGap, setSkillGap] = useState(null)
   const [internships, setInternships] = useState(null)
   const [roadmap, setRoadmap] = useState(null)
+  const [skillGapReal, setSkillGapReal] = useState(false)
+  const [internReal, setInternReal] = useState(false)
+  const [roadReal, setRoadReal] = useState(false)
   const [loadingGap, setLoadingGap] = useState(false)
   const [loadingInternships, setLoadingInternships] = useState(false)
   const [loadingRoadmap, setLoadingRoadmap] = useState(false)
@@ -310,21 +322,20 @@ function DashboardContent({
       setInternships(null)
       setRoadmap(null)
 
-      // Compute local skill gap instantly so roadmap can start immediately
+      // Compute the missing skills locally so the roadmap can start immediately
       const localGap = (() => {
         const required = ROLE_SKILLS_MAP[targetRole] || ROLE_SKILLS_MAP['Other']
         const userSet = new Set(skills.map((s) => s.toLowerCase()))
         return required.filter((s) => !userSet.has(s.toLowerCase()))
       })()
 
-      // Fire all in parallel — roadmap uses local missing skills immediately.
-      // Skill gap first tries real backend roadmaps (my-roadmaps), falls back to local.
-      const [gapResult, internResult, roadResult, myRoadmaps] = await Promise.all([
-        analyzeSkillGap(skills, targetRole),
+      // Fire in parallel — roadmap + internships come from the backend when it
+      // responds; both functions fall back to local samples only on failure.
+      const [internRes, roadRes, myRoadmaps] = await Promise.all([
         fetchInternships(skills, 4),
         localGap.length > 0
           ? generateRoadmap(localGap, targetRole)
-          : Promise.resolve(null),
+          : Promise.resolve({ payload: null, real: false }),
         fetchMyRoadmaps(),
       ])
 
@@ -333,13 +344,19 @@ function DashboardContent({
       setLoadingInternships(false)
       setLoadingRoadmap(false)
 
-      // Use real roadmap's missing skills to build the Skill Gap card
-      const realGap = buildSkillGapFromRoadmaps(myRoadmaps, roadResult, skills, targetRole)
-      if (realGap) setSkillGap(realGap)
-      else if (gapResult) setSkillGap(gapResult)
+      // Skill Gap is derived from the real AI roadmap's missing skills
+      const gap = buildSkillGapFromRoadmaps(roadRes, myRoadmaps, skills, targetRole)
+      setSkillGap(gap.payload)
+      setSkillGapReal(gap.real)
 
-      if (internResult) setInternships(internResult)
-      if (roadResult) setRoadmap(roadResult)
+      if (internRes?.payload) {
+        setInternships(internRes.payload)
+        setInternReal(internRes.real)
+      }
+      if (roadRes?.payload) {
+        setRoadmap(roadRes.payload)
+        setRoadReal(roadRes.real)
+      }
     }
 
     run()
@@ -732,18 +749,18 @@ function DashboardContent({
 
             {/* Skill Gap */}
             <div id="skillgap" className="scroll-mt-28 h-full flex flex-col">
-              <SkillGapCard data={skillGap} loading={loadingGap} />
+              <SkillGapCard data={skillGap} loading={loadingGap} real={skillGapReal} />
             </div>
 
             {/* Internships */}
             <div id="internships" className="scroll-mt-28 h-full flex flex-col">
-              <InternshipCard data={internships} loading={loadingInternships} />
+              <InternshipCard data={internships} loading={loadingInternships} real={internReal} />
             </div>
           </div>
 
           {/* Roadmap */}
           <div id="roadmap" className="scroll-mt-28 mt-6">
-            <RoadmapCard data={roadmap} loading={loadingRoadmap} />
+            <RoadmapCard data={roadmap} loading={loadingRoadmap} real={roadReal} />
           </div>
         </main>
       </div>

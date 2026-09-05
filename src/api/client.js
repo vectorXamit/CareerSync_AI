@@ -166,8 +166,12 @@ function skillsHash(skills) {
   return [...skills].sort().join(',').toLowerCase()
 }
 
+// All recommenders return { payload, real }.
+// real: true  = data came from the live backend
+// real: false = backend failed, returned a local sample/estimate instead
+// v2 cache keys so older (raw-shaped) cache entries from previous deploys expire cleanly.
 export async function analyzeSkillGap(skills, targetRole) {
-  const cacheKey = `cs_gap_${targetRole}_${skillsHash(skills)}`
+  const cacheKey = `cs_gap2_${targetRole}_${skillsHash(skills)}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
@@ -182,19 +186,20 @@ export async function analyzeSkillGap(skills, targetRole) {
       const res = await api.post(`/analyze/${studentId}`, {
         target_role: targetRole,
       })
-      setCache(cacheKey, res.data)
-      return res.data
+      const out = { payload: res.data, real: true }
+      setCache(cacheKey, out)
+      return out
     }
   } catch (err) {
     console.warn('Backend analyze failed, using local fallback:', err.message)
   }
   // Local fallback — mirrors backend gap_engine.py logic
   // NOTE: not cached so real data isn't blocked when backend comes online
-  return computeSkillGapLocally(skills, targetRole)
+  return { payload: computeSkillGapLocally(skills, targetRole), real: false }
 }
 
 export async function fetchInternships(skills, limit = 4) {
-  const cacheKey = `cs_intern_${limit}_${skillsHash(skills)}`
+  const cacheKey = `cs_intern2_${limit}_${skillsHash(skills)}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
@@ -208,18 +213,19 @@ export async function fetchInternships(skills, limit = 4) {
     else if (data && Array.isArray(data.internships)) result = data.internships
     else if (Array.isArray(data?.data)) result = data.data
     if (result && result.length > 0) {
-      setCache(cacheKey, result)
-      return result
+      const out = { payload: result, real: true }
+      setCache(cacheKey, out)
+      return out
     }
   } catch (err) {
     console.warn('Backend internships failed, using local fallback:', err.message)
   }
   // Local fallback — NOT cached so real data isn't blocked
-  return computeInternshipsLocally(skills, limit)
+  return { payload: computeInternshipsLocally(skills, limit), real: false }
 }
 
 export async function generateRoadmap(missingSkills, targetRole) {
-  const cacheKey = `cs_road_${targetRole}_${skillsHash(missingSkills)}`
+  const cacheKey = `cs_road2_${targetRole}_${skillsHash(missingSkills)}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
@@ -228,13 +234,17 @@ export async function generateRoadmap(missingSkills, targetRole) {
     const res = await api.post('/roadmap/generate', null, {
       params: { target_role: targetRole },
     })
-    setCache(cacheKey, res.data)
-    return res.data
+    const payload = res.data
+    if (payload && Array.isArray(payload.roadmap) && payload.roadmap.length > 0) {
+      const out = { payload, real: true }
+      setCache(cacheKey, out)
+      return out
+    }
   } catch (err) {
     console.warn('Backend roadmap failed, using local fallback:', err.message)
   }
   // Local fallback — NOT cached so real data isn't blocked
-  return generateRoadmapLocally(missingSkills, targetRole)
+  return { payload: generateRoadmapLocally(missingSkills, targetRole), real: false }
 }
 
 // Fetch the user's previously generated AI roadmaps (real backend data)
