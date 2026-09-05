@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://careersync-ai-backend.onrender.com/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

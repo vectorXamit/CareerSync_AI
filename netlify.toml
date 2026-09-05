@@ -1,0 +1,17 @@
+# Netlify build settings
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Proxy — Frontend -> /api/v1/* (Netlify edge) -> Render backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://careersync-ai-backend.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback (client-side routing)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

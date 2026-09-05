@@ -1,9 +1,15 @@
 import axios from 'axios'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
+// Relative to the same origin. In dev, Vite proxies /api to the backend;
+// in production, the Vercel serverless function api/[...path].js forwards it.
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
-  timeout: 6000,
+  baseURL: API_BASE_URL,
+  // Allow Render cold-starts (~45s observed) + AI generation. Hard failures
+  // (backend down) return a fast 502 from the proxy instead of hanging.
+  timeout: 180000,
 })
 
 api.interceptors.request.use(async (config) => {

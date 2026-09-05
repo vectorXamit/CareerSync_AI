@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
 import { supabase } from '../lib/supabase'
+import { API_BASE_URL } from '../api/client'
 import Navbar from '../components/Navbar'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
 function Sidebar() {
   const steps = [
@@ -73,9 +72,9 @@ export default function Upload() {
     try {
       const { data } = await supabase.auth.getSession(); const token = data.session?.access_token
       if (!token) { setError('Session expired'); setParsing(false); return }
-      const res = await axios.post(`${API_URL}/resume/upload`, formData, {
+      const res = await axios.post(`${API_BASE_URL}/resume/upload`, formData, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 90000,
+        timeout: 180000,
         withCredentials: true,
       })
       console.log('REAL DATA FROM BACKEND', res.data); localStorage.setItem('careerpilot_data', JSON.stringify(res.data))
