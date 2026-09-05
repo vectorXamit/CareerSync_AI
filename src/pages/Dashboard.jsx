@@ -9,6 +9,7 @@ import {
   fetchInternships,
   generateRoadmap,
   fetchMyRoadmaps,
+  analyzeSkillGap,
 } from '../api/client'
 
 const ROLE_SKILLS_MAP = {
@@ -329,14 +330,16 @@ function DashboardContent({
         return required.filter((s) => !userSet.has(s.toLowerCase()))
       })()
 
-      // Fire in parallel — roadmap + internships come from the backend when it
-      // responds; both functions fall back to local samples only on failure.
-      const [internRes, roadRes, myRoadmaps] = await Promise.all([
+      // Fire in parallel — roadmap, internships, and the real gap analysis come
+      // from the backend when it responds; each falls back to local samples
+      // only on failure.
+      const [internRes, roadRes, myRoadmaps, gapRes] = await Promise.all([
         fetchInternships(skills, 4, targetRole),
         localGap.length > 0
           ? generateRoadmap(localGap, targetRole)
           : Promise.resolve({ payload: null, real: false }),
         fetchMyRoadmaps(),
+        analyzeSkillGap(skills, targetRole),
       ])
 
       if (cancelled) return
@@ -344,8 +347,11 @@ function DashboardContent({
       setLoadingInternships(false)
       setLoadingRoadmap(false)
 
-      // Skill Gap is derived from the real AI roadmap's missing skills
-      const gap = buildSkillGapFromRoadmaps(roadRes, myRoadmaps, skills, targetRole)
+      // Prefer the backend's real role-vs-resume gap analysis when it works;
+      // otherwise derive the gap from the real AI roadmap (or offline estimate).
+      const gap = gapRes?.real
+        ? gapRes
+        : buildSkillGapFromRoadmaps(roadRes, myRoadmaps, skills, targetRole)
       setSkillGap(gap.payload)
       setSkillGapReal(gap.real)
 
